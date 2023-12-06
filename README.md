@@ -8,24 +8,12 @@ React Native module for Transmit Security Authentication SDK
 npm install react-native-ts-authentication
 ```
 
-## Usage
+platform :ios, 15.0
 
-```js
-import { multiply } from 'react-native-ts-authentication';
 
-// ...
-
-const result = await multiply(3, 7);
-```
-
-## Contributing
-
-See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
-
-## License
-
-MIT
-
----
-
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
+verify these end points:
+  export const enum BaseURL {
+    us = "https://webauthn.identity.security/v1",
+    eu = "https://webauthn.eu.identity.security/v1"
+  }
+probably they are wrong. one taken from the github repo, another from the portal documentation.

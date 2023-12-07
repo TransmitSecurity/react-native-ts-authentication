@@ -1,7 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class LocalUserStore {
 
-    // private kUserStoreStorageKey = 'rn-ts-authentication__local-user-store';
+    private kUserStoreStorageKey = 'rn-ts-authentication__local-user-store';
     private userIDsStore: string[] = [];
 
     constructor() {
@@ -23,18 +24,23 @@ class LocalUserStore {
     }
 
     // Private methods
-    
-    private loadUserStore(): void {
-        // const userStore = localStorage.getItem(this.kUserStoreStorageKey);
-        // if (userStore) {
-        //     this.userIDsStore = JSON.parse(userStore);
-        // } else {
-        //     this.updateUserStore();
-        // }
-    } 
 
-    private updateUserStore(): void {
-        // localStorage.setItem(this.kUserStoreStorageKey, JSON.stringify(this.userIDsStore));
+    private loadUserStore = async (): Promise<void> => {
+        const userStore = await AsyncStorage.getItem(this.kUserStoreStorageKey);
+        if (userStore) {
+            this.userIDsStore = JSON.parse(userStore);
+        } else {
+            this.updateUserStore();
+        }
+    }
+
+    private updateUserStore = async (): Promise<void> => {
+        try {
+            let storeJson = JSON.stringify(this.userIDsStore);
+            await AsyncStorage.setItem(this.kUserStoreStorageKey, storeJson);
+        } catch (e) {
+            console.log('Error saving user store', e);
+        }
     }
 }
 export default new LocalUserStore();

@@ -17,3 +17,9 @@ verify these end points:
     eu = "https://webauthn.eu.identity.security/v1"
   }
 probably they are wrong. one taken from the github repo, another from the portal documentation.
+
+ios setup
+https://developer.transmitsecurity.com/guides/webauthn/quick_start_sdk_ios/
+
+
+update bundle id and setup associated domains iOS format example: webcredentials:shopcart.userid-stg.io (instruct to follow the tutorial for each platform)

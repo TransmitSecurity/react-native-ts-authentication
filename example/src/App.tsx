@@ -4,23 +4,39 @@ import TSAuthenticationSDKModule, { TSAuthenticationSDK } from 'react-native-ts-
 import HomeScreen from './home';
 import config from './config';
 import localUserStore from './utils/local-user-store';
+import MockServer from './utils/mock_server';
+import LoggedIn from './logged-in';
+
+const enum AppScreen {
+  Home = 'Home',
+  AuthenticatedUser = 'AuthenticatedUser'
+}
 
 export type State = {
   errorMessage: string,
+  currentScreen: string,
+  username: string,
+  isNewlyRegistered: boolean
 };
 
 export type ExampleAppConfiguration = {
   clientId: string;
   domain: string;
-  baseUrl: TSAuthenticationSDK.BaseURL;
+  baseUrl: string;
+  secret: string;
 }
 
 export default class App extends React.Component<any, State> {
+
+  private mockServer!: MockServer;
 
   constructor(props: any) {
     super(props);
     this.state = {
       errorMessage: '',
+      currentScreen: AppScreen.Home,
+      username: "",
+      isNewlyRegistered: false
     };
   }
 
@@ -31,35 +47,83 @@ export default class App extends React.Component<any, State> {
   render() {
     return (
       <SafeAreaView style={{ flex: 1 }}>
-        <HomeScreen onStartAuthentication={this.onStartAuthentication} errorMessage={this.state.errorMessage} />
+        {
+          this.state.currentScreen === AppScreen.Home ? (
+            <HomeScreen onStartAuthentication={this.onStartAuthentication} errorMessage={this.state.errorMessage} />
+          ) : (
+            <LoggedIn username={this.state.username} onLogout={this.onLogout} isNewlyRegistered={this.state.isNewlyRegistered}/>
+          )
+        }
       </SafeAreaView>
     );
   }
 
   // Authentication Process Handlers
 
-  onStartAuthentication = async (username: string): Promise<void> => {
-    if (username === '') {
+  public onStartAuthentication = async (rawUsername: string): Promise<void> => {
+    if (rawUsername === '') {
       this.setState({ errorMessage: 'Please enter a username' });
       return;
     }
 
+    const username = rawUsername.toLowerCase();
     this.setState({ errorMessage: '' });
 
     if (localUserStore.isUserIDStored(username)) {
       this.authenticate(username);
-    } else  {
+    } else {
       const displayName = username + "_" + this.randomString();
       this.register(username, displayName);
     }
   }
 
+  // Registration
+
   private register = async (username: string, displayName: string): Promise<void> => {
-    TSAuthenticationSDKModule.register(username, displayName);
+    try {
+      const response = await TSAuthenticationSDKModule.register(username, displayName);
+      const accessToken = await this.mockServer.getAccessToken();
+      const success = await this.mockServer.completeRegistration(accessToken.token, response.result, username);
+      if (success) {
+        localUserStore.addUserID(username);
+        this.navigateToAuthenticatedUserScreen(username, true);
+      } else {
+        this.setState({ errorMessage: 'Registration failed' });
+      }
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
   }
 
-  private authenticate = async (username: string): Promise<void> => {
+  // Authentication
 
+  private authenticate = async (username: string): Promise<void> => {
+    try {
+      const response = await TSAuthenticationSDKModule.authenticate(username);
+      const accessToken = await this.mockServer.getAccessToken();
+      const success = await this.mockServer.completeAuthentication(accessToken.token, response.result);
+      if (success) {
+        this.navigateToAuthenticatedUserScreen(username, false);
+      } else {
+        this.setState({ errorMessage: 'Authentication failed' });
+      }
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+
+  // Navigation
+
+  private navigateToAuthenticatedUserScreen = (username: string, isNewRegistration: boolean): void => {
+    this.setState({ 
+        currentScreen: AppScreen.AuthenticatedUser, 
+        username,
+        isNewlyRegistered: isNewRegistration
+    });
+  }
+
+  private onLogout = (): void => {
+    this.setState({ currentScreen: AppScreen.Home, username: "" });
   }
 
   // App Configuration
@@ -69,7 +133,8 @@ export default class App extends React.Component<any, State> {
       const appConfiguration: ExampleAppConfiguration = {
         clientId: config.clientId,
         domain: config.domain,
-        baseUrl: TSAuthenticationSDK.BaseURL.us,
+        baseUrl: `${config.baseUrl}`,
+        secret: config.secret
       }
       this.configureExampleApp(appConfiguration);
     } else {
@@ -78,28 +143,17 @@ export default class App extends React.Component<any, State> {
   }
 
   private configureExampleApp = async (appConfiguration: ExampleAppConfiguration): Promise<void> => {
-    
-    TSAuthenticationSDKModule.initialize(
-      appConfiguration.clientId, 
-      appConfiguration.domain, 
-      appConfiguration.baseUrl
+    this.mockServer = new MockServer(
+      appConfiguration.baseUrl,
+      appConfiguration.clientId,
+      appConfiguration.secret
     );
-    
-    // this.mockServer = new MockServer(
-    //   appConfiguration.baseAPIURL,
-    //   appConfiguration.clientId,
-    //   appConfiguration.secret
-    // );
-    // IdentityVerification.initialize(appConfiguration.clientId);
 
-    // this.registerForEvents();
-    // this.requestCameraPermissions();
-
-    // try {
-    //   this.accessTokenResponse = await this.mockServer.getAccessToken();
-    // } catch (error) {
-    //   this.setState({ errorMessage: `${error}` });
-    // }
+    TSAuthenticationSDKModule.initialize(
+      appConfiguration.clientId,
+      appConfiguration.domain,
+      `${appConfiguration.baseUrl}/cis/v1`
+    );
   }
 
   private isAppConfigured = (): boolean => {

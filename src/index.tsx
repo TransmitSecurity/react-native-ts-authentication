@@ -40,40 +40,25 @@ export namespace TSAuthenticationSDK {
     passkeyError,
     unknown
   }
-
-  export interface TSRegistrationCompletion {
-    result: TSRegistrationResult;
-    error: TSAuthenticationError;
-  }
-
-  export interface TSAuthenticationCompletion {
-    result: TSAuthenticationResult;
-    error: TSAuthenticationError;
-  }
-
-  export const enum BaseURL {
-    us = "https://webauthn.identity.security/v1",
-    eu = "https://webauthn.eu.identity.security/v1"
-  }
 }
 
 export interface TSAuthenticationSDKModule {
-  initialize: (clientId: string, domain: string, baseUrl: TSAuthenticationSDK.BaseURL) => Promise<boolean>;
-  register: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationCompletion>;
-  authenticate: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationCompletion>;
+  initialize: (clientId: string, domain: string, baseUrl: string) => Promise<boolean>;
+  register: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
+  authenticate: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
 }
 
 class AuthenticationSDK implements TSAuthenticationSDKModule {
 
-  initialize(clientId: string, domain: string, baseUrl: TSAuthenticationSDK.BaseURL): Promise<boolean> {
+  initialize(clientId: string, domain: string, baseUrl: string): Promise<boolean> {
     return TsAuthentication.initialize(clientId, domain, baseUrl);
   }
 
-  register(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationCompletion> {
+  register(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationResult> {
     return TsAuthentication.register(username, displayName);
   }
 
-  authenticate(username: string): Promise<TSAuthenticationSDK.TSAuthenticationCompletion> {
+  authenticate(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
     return TsAuthentication.authenticate(username);
   }
 

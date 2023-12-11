@@ -76,5 +76,4 @@ class TsAuthentication: NSObject {
             block()
         }
     }
-    
 }

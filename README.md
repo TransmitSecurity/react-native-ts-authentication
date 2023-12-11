@@ -7,18 +7,11 @@ React Native module for Transmit Security Authentication SDK
 ```sh
 npm install react-native-ts-authentication
 ```
+ios setup
 
 platform :ios, 15.0
 
-
-verify these end points:
-  export const enum BaseURL {
-    us = "https://webauthn.identity.security/v1",
-    eu = "https://webauthn.eu.identity.security/v1"
-  }
-probably they are wrong. one taken from the github repo, another from the portal documentation.
-
-ios setup
+add the capabilities
 https://developer.transmitsecurity.com/guides/webauthn/quick_start_sdk_ios/
 
 

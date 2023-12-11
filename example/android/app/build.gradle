@@ -121,3 +121,10 @@ dependencies {
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+
+repositories {
+  google()
+  maven {
+    url('https://transmit.jfrog.io/artifactory/transmit-security-gradle-release-local/')
+  }
+}

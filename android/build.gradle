@@ -72,15 +72,18 @@ android {
 }
 
 repositories {
-  mavenCentral()
   google()
+  mavenCentral()
+  maven {
+    url('https://transmit.jfrog.io/artifactory/transmit-security-gradle-release-local/')
+  }
 }
-
 
 dependencies {
   // For < 0.71, this will be from the local maven repo
   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
   //noinspection GradleDynamicVersion
+  implementation("com.ts.sdk:authentication:1.0.+")
   implementation "com.facebook.react:react-native:+"
 }
 

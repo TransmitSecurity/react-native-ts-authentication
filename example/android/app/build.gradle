@@ -75,7 +75,7 @@ android {
 
     namespace "com.tsauthenticationexample"
     defaultConfig {
-        applicationId "com.tsauthenticationexample"
+        applicationId "com.transmitsecurity.authsdk-rn-example"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

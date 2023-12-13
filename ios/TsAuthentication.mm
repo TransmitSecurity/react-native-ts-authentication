@@ -9,6 +9,8 @@ RCT_EXTERN_METHOD(register:(NSString *)username displayName:(NSString*)displayNa
                   withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(authenticate:(NSString *)username withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(signTransaction:(NSString *)username withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
 
 + (BOOL)requiresMainQueueSetup
 {

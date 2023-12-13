@@ -62,5 +62,9 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
     return TsAuthentication.authenticate(username);
   }
 
+  signTransaction(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
+    return TsAuthentication.signTransaction(username);
+  }
+
 }
 export default new AuthenticationSDK();

@@ -11,6 +11,7 @@ import { View, StyleSheet, Text, Button, TextInput } from 'react-native';
 export type Props = {
     username: string;
     isNewlyRegistered: boolean;
+    onStartTransaction: (username: string) => void;
     onLogout: () => void;
 };
 
@@ -28,8 +29,9 @@ export default class LoggedIn extends React.Component<Props, State> {
             <View style={styles.container}>
                 <View style={{ marginTop: 20 }} />
                 <Text style={styles.sectionTitle}>
-                    {`Hello ${this.props.username}. You are authenticated. Your user status is: ${stateText}`}
+                    {`Hello ${this.props.username}. You are authenticated.\nYour user status is:\n ${stateText}`}
                 </Text>
+                {this.renderStartSignTransactionButton()}
                 {this.renderLogoutButton()}
             </View>
         );
@@ -41,6 +43,17 @@ export default class LoggedIn extends React.Component<Props, State> {
                 <Button
                     title="Logout"
                     onPress={() => this.props.onLogout()}
+                />
+            </View>
+        )
+    }
+
+    private renderStartSignTransactionButton(): ReactElement {
+        return (
+            <View style={{ marginTop: 24 }}>
+                <Button
+                    title="Start Transaction"
+                    onPress={() => this.props.onStartTransaction(this.props.username)}
                 />
             </View>
         )

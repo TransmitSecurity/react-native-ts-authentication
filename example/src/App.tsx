@@ -49,13 +49,49 @@ export default class App extends React.Component<any, State> {
       <SafeAreaView style={{ flex: 1 }}>
         {
           this.state.currentScreen === AppScreen.Home ? (
-            <HomeScreen onStartAuthentication={this.onStartAuthentication} errorMessage={this.state.errorMessage} />
+            <HomeScreen onStartAuthentication={this.onStartAuthentication} errorMessage={this.state.errorMessage}
+            />
           ) : (
-            <LoggedIn username={this.state.username} onLogout={this.onLogout} isNewlyRegistered={this.state.isNewlyRegistered}/>
+            <LoggedIn 
+              username={this.state.username}
+              onStartTransaction={this.onStartTransaction}
+              onLogout={this.onLogout} 
+              isNewlyRegistered={this.state.isNewlyRegistered} 
+            />
           )
         }
       </SafeAreaView>
     );
+  }
+
+  // Transaction Process Handlers
+
+  public onStartTransaction = async (rawUsername: string): Promise<void> => {
+    const username = rawUsername.toLowerCase();
+    this.setState({ errorMessage: '' });
+
+    if (localUserStore.isUserIDStored(username)) {
+      this.signTransaction(username);
+    } else {
+      console.log("User not registered");
+      this.setState({ errorMessage: 'User not registered' });
+    }
+  }
+
+  private signTransaction = async (username: string): Promise<void> => {
+    try {
+      const response = await TSAuthenticationSDKModule.signTransaction(username);
+      const accessToken = await this.mockServer.getAccessToken();
+      const success = await this.mockServer.completeAuthentication(accessToken.token, response.result); // should change???
+      if (success) {
+        this.setState({ errorMessage: '' });
+        console.log("Sign Transaction success");
+      } else {
+        this.setState({ errorMessage: 'Sign Transaction failed' });
+      }
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
   }
 
   // Authentication Process Handlers
@@ -115,10 +151,10 @@ export default class App extends React.Component<any, State> {
   // Navigation
 
   private navigateToAuthenticatedUserScreen = (username: string, isNewRegistration: boolean): void => {
-    this.setState({ 
-        currentScreen: AppScreen.AuthenticatedUser, 
-        username,
-        isNewlyRegistered: isNewRegistration
+    this.setState({
+      currentScreen: AppScreen.AuthenticatedUser,
+      username,
+      isNewlyRegistered: isNewRegistration
     });
   }
 

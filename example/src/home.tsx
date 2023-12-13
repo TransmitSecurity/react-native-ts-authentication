@@ -69,7 +69,7 @@ export default class HomeScreen extends React.Component<Props, State> {
                 />
             </View>
         )
-    }
+    }    
 }
 
 const styles = StyleSheet.create({

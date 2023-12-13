@@ -69,6 +69,25 @@ class TsAuthentication: NSObject {
             }
     }
     
+    @objc(signTransaction:withResolver:withRejecter:)
+    func signTransaction(
+        _ username: String,
+        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+            
+            runBlockOnMain {
+                TSAuthentication.shared.signTransaction(username: username) { [weak self] results in
+                    guard let self = self else { return }
+                    
+                    switch results {
+                        case .success(let response):
+                            resolve(["result": response.result])
+                        case .failure(let error):
+                            reject(self.kTag, error.localizedDescription, error)
+                        }
+                    }
+            }
+    }
+
     // MARK: - Threading
         
     private func runBlockOnMain(_ block: @escaping () -> Void) {

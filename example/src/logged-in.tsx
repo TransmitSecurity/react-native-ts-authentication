@@ -6,7 +6,7 @@
  */
 
 import React, { type ReactElement } from 'react';
-import { View, StyleSheet, Text, Button, TextInput } from 'react-native';
+import { View, StyleSheet, Text, Button } from 'react-native';
 
 export type Props = {
     username: string;

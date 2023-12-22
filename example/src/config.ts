@@ -1,6 +1,6 @@
 export default {
-    clientId: "5nhc16n9f165t4gp0todzd37qzfr9oxq",
-    domain: "shopcart.userid-stg.io",
-    secret: "aa14b16a-87fb-43aa-8372-df130b25d1ad",
+    clientId: "CLIENT_ID_FROM_PORTAL",
+    domain: "ASSOCIATED_DOMAIN",
+    secret: "SECRET_FROM_PORTAL", // Important! This is just for demo purposes. Never store your secret in the client side.
     baseUrl: "https://api.transmitsecurity.io", // eu = "api.eu.transmitsecurity.io" ca = "api.ca.transmitsecurity.io"
 }

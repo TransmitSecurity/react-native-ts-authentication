@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SafeAreaView } from 'react-native';
-import TSAuthenticationSDKModule, { TSAuthenticationSDK } from 'react-native-ts-authentication';
+import TSAuthenticationSDKModule from 'react-native-ts-authentication';
 import HomeScreen from './home';
 import config from './config';
 import localUserStore from './utils/local-user-store';

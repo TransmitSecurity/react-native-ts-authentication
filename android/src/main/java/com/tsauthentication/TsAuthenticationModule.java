@@ -8,6 +8,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.UiThreadUtil;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.module.annotations.ReactModule;
@@ -35,11 +36,17 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull public void initialize(String clientId, String domain, String baseUrl, Promise promise) {
-    TSAuthentication.init(getReactApplicationContext(),
-      baseUrl,
-      clientId
-    );
-    promise.resolve(true);
+    UiThreadUtil.runOnUiThread(
+      new Runnable() {
+        @Override
+        public void run() {
+          TSAuthentication.init(getReactApplicationContext(),
+            baseUrl,
+            clientId
+          );
+          promise.resolve(true);
+        }
+      });
   }
 
   // Registration
@@ -49,62 +56,108 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     String username,
     String displayName,
     Promise promise) {
-    TSAuthentication.isPlatformAuthenticatorSupported(
-      getReactApplicationContext(),
-      new TSAuthCallback<Boolean>() {
-        @Override
-        public void success(Boolean aBoolean) {
-          continueRegistration(username, displayName, promise);
-        }
 
+    UiThreadUtil.runOnUiThread(
+      new Runnable() {
         @Override
-        public void error(@NonNull AuthenticationError authenticationError) {
-          promise.reject(new Error("Unsupported platform"));
+        public void run() {
+          TSAuthentication.isPlatformAuthenticatorSupported(
+            getReactApplicationContext(),
+            new TSAuthCallback<Boolean>() {
+              @Override
+              public void success(Boolean aBoolean) {
+                continueRegistration(username, displayName, promise);
+              }
+
+              @Override
+              public void error(@NonNull AuthenticationError authenticationError) {
+                promise.reject(new Error("Unsupported platform"));
+              }
+            }
+          );
         }
-      }
-    );
+      });
   }
   private void continueRegistration(String username, String displayName, Promise promise) {
-    TSAuthentication.register(
-      getReactApplicationContext(),
-      username,
-      displayName,
-      new TSAuthCallback<RegistrationResult>() {
+    UiThreadUtil.runOnUiThread(
+      new Runnable() {
         @Override
-        public void success(RegistrationResult registrationResult) {
-          WritableMap map = new WritableNativeMap();
-          map.putString(registrationResult.result(), NAME);
-          promise.resolve(map);
-        }
+        public void run() {
+          TSAuthentication.register(
+            getReactApplicationContext(),
+            username,
+            displayName,
+            new TSAuthCallback<RegistrationResult>() {
+              @Override
+              public void success(RegistrationResult registrationResult) {
+                WritableMap map = new WritableNativeMap();
+                map.putString(registrationResult.result(), NAME);
+                promise.resolve(map);
+              }
 
-        @Override
-        public void error(@NonNull AuthenticationError authenticationError) {
-          promise.reject(NAME, authenticationError.toString());
+              @Override
+              public void error(@NonNull AuthenticationError authenticationError) {
+                promise.reject(NAME, authenticationError.toString());
+              }
+            }
+          );
         }
-      }
-    );
+      });
   }
 
   // Authentication
   @ReactMethod
   @NonNull public void authenticate(String username, Promise promise) {
-    TSAuthentication.authenticate(
-      getReactApplicationContext(),
-      username,
-      new TSAuthCallback<AuthenticationResult>() {
+    UiThreadUtil.runOnUiThread(
+      new Runnable() {
         @Override
-        public void success(AuthenticationResult authenticationResult) {
-          WritableMap map = new WritableNativeMap();
-          map.putString(authenticationResult.result(), NAME);
-          promise.resolve(map);
-        }
+        public void run() {
+          TSAuthentication.authenticate(
+            getReactApplicationContext(),
+            username,
+            new TSAuthCallback<AuthenticationResult>() {
+              @Override
+              public void success(AuthenticationResult authenticationResult) {
+                WritableMap map = new WritableNativeMap();
+                map.putString(authenticationResult.result(), NAME);
+                promise.resolve(map);
+              }
 
-        @Override
-        public void error(@NonNull AuthenticationError authenticationError) {
-          promise.reject(NAME, authenticationError.toString());
+              @Override
+              public void error(@NonNull AuthenticationError authenticationError) {
+                promise.reject(NAME, authenticationError.toString());
+              }
+            }
+          );
         }
-      }
-    );
+      });
+  }
+
+  @ReactMethod
+  @NonNull public void signTransaction(String username, Promise promise) {
+    UiThreadUtil.runOnUiThread(
+      new Runnable() {
+        @Override
+        public void run() {
+          TSAuthentication.signTransaction(
+            getReactApplicationContext(),
+            username,
+            new TSAuthCallback<AuthenticationResult>() {
+              @Override
+              public void success(AuthenticationResult authenticationResult) {
+                WritableMap map = new WritableNativeMap();
+                map.putString(authenticationResult.result(), NAME);
+                promise.resolve(map);
+              }
+
+              @Override
+              public void error(@NonNull AuthenticationError authenticationError) {
+                promise.reject(NAME, authenticationError.toString());
+              }
+            }
+          );
+        }
+      });
   }
 }
 

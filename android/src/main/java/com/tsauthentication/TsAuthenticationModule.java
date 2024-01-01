@@ -23,9 +23,11 @@ import java.util.HashMap;
 @ReactModule(name = TsAuthenticationModule.NAME)
 public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   public static final String NAME = "TsAuthentication";
+  ReactApplicationContext reactContext;
 
   public TsAuthenticationModule(ReactApplicationContext reactContext) {
     super(reactContext);
+    this.reactContext = reactContext;
   }
 
   @Override
@@ -36,17 +38,15 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull public void initialize(String clientId, String domain, String baseUrl, Promise promise) {
-    UiThreadUtil.runOnUiThread(
-      new Runnable() {
-        @Override
-        public void run() {
-          TSAuthentication.init(getReactApplicationContext(),
-            baseUrl,
-            clientId
-          );
-          promise.resolve(true);
-        }
-      });
+
+    if(reactContext.getCurrentActivity() != null) {
+      TSAuthentication.init(
+        reactContext,
+        baseUrl, // TODO - "https://webauthn.identity.security/v1/"
+        clientId
+      );
+      promise.resolve(true);
+    }
   }
 
   // Registration
@@ -56,108 +56,91 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     String username,
     String displayName,
     Promise promise) {
+    if(reactContext.getCurrentActivity() != null) {
+      TSAuthentication.isPlatformAuthenticatorSupported(
+        reactContext.getCurrentActivity(),
+        new TSAuthCallback<Boolean>() {
+          @Override
+          public void success(Boolean aBoolean) {
+            continueRegistration(username, displayName, promise);
+          }
 
-    UiThreadUtil.runOnUiThread(
-      new Runnable() {
-        @Override
-        public void run() {
-          TSAuthentication.isPlatformAuthenticatorSupported(
-            getReactApplicationContext(),
-            new TSAuthCallback<Boolean>() {
-              @Override
-              public void success(Boolean aBoolean) {
-                continueRegistration(username, displayName, promise);
-              }
-
-              @Override
-              public void error(@NonNull AuthenticationError authenticationError) {
-                promise.reject(new Error("Unsupported platform"));
-              }
-            }
-          );
+          @Override
+          public void error(@NonNull AuthenticationError authenticationError) {
+            promise.reject(new Error("Unsupported platform"));
+          }
         }
-      });
+      );
+    }
   }
   private void continueRegistration(String username, String displayName, Promise promise) {
-    UiThreadUtil.runOnUiThread(
-      new Runnable() {
-        @Override
-        public void run() {
-          TSAuthentication.register(
-            getReactApplicationContext(),
-            username,
-            displayName,
-            new TSAuthCallback<RegistrationResult>() {
-              @Override
-              public void success(RegistrationResult registrationResult) {
-                WritableMap map = new WritableNativeMap();
-                map.putString(registrationResult.result(), NAME);
-                promise.resolve(map);
-              }
+    if(reactContext.getCurrentActivity() != null) {
+      TSAuthentication.register(
+        reactContext.getCurrentActivity(),
+        username,
+        displayName,
+        new TSAuthCallback<RegistrationResult>() {
+          @Override
+          public void success(RegistrationResult registrationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString(registrationResult.result(), NAME);
+            promise.resolve(map);
+          }
 
-              @Override
-              public void error(@NonNull AuthenticationError authenticationError) {
-                promise.reject(NAME, authenticationError.toString());
-              }
-            }
-          );
+          @Override
+          public void error(@NonNull AuthenticationError authenticationError) {
+            promise.reject(NAME, authenticationError.toString());
+          }
         }
-      });
+      );
   }
 
   // Authentication
   @ReactMethod
   @NonNull public void authenticate(String username, Promise promise) {
-    UiThreadUtil.runOnUiThread(
-      new Runnable() {
-        @Override
-        public void run() {
-          TSAuthentication.authenticate(
-            getReactApplicationContext(),
-            username,
-            new TSAuthCallback<AuthenticationResult>() {
-              @Override
-              public void success(AuthenticationResult authenticationResult) {
-                WritableMap map = new WritableNativeMap();
-                map.putString(authenticationResult.result(), NAME);
-                promise.resolve(map);
-              }
-
-              @Override
-              public void error(@NonNull AuthenticationError authenticationError) {
-                promise.reject(NAME, authenticationError.toString());
-              }
+      if(reactContext.getCurrentActivity() != null) {
+        TSAuthentication.authenticate(
+          reactContext.getCurrentActivity(),
+          username,
+          new TSAuthCallback<AuthenticationResult>() {
+            @Override
+            public void success(AuthenticationResult authenticationResult) {
+              WritableMap map = new WritableNativeMap();
+              map.putString(authenticationResult.result(), NAME);
+              promise.resolve(map);
             }
-          );
-        }
-      });
+
+            @Override
+            public void error(@NonNull AuthenticationError authenticationError) {
+              promise.reject(NAME, authenticationError.toString());
+            }
+          }
+        );
+      }
+    }
   }
 
   @ReactMethod
   @NonNull public void signTransaction(String username, Promise promise) {
-    UiThreadUtil.runOnUiThread(
-      new Runnable() {
-        @Override
-        public void run() {
-          TSAuthentication.signTransaction(
-            getReactApplicationContext(),
-            username,
-            new TSAuthCallback<AuthenticationResult>() {
-              @Override
-              public void success(AuthenticationResult authenticationResult) {
-                WritableMap map = new WritableNativeMap();
-                map.putString(authenticationResult.result(), NAME);
-                promise.resolve(map);
-              }
+    if(reactContext.getCurrentActivity() != null) {
+      TSAuthentication.signTransaction(
+        reactContext.getCurrentActivity(),
+        username,
+        new TSAuthCallback<AuthenticationResult>() {
+          @Override
+          public void success(AuthenticationResult authenticationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString(authenticationResult.result(), NAME);
+            promise.resolve(map);
+          }
 
-              @Override
-              public void error(@NonNull AuthenticationError authenticationError) {
-                promise.reject(NAME, authenticationError.toString());
-              }
-            }
-          );
+          @Override
+          public void error(@NonNull AuthenticationError authenticationError) {
+            promise.reject(NAME, authenticationError.toString());
+          }
         }
-      });
+      );
+    }
   }
 }
 

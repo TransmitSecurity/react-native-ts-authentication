@@ -41,7 +41,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     if(reactContext.getCurrentActivity() != null) {
       TSAuthentication.init(
         reactContext,
-        baseUrl, // TODO - "https://webauthn.identity.security/v1/"
+        baseUrl,
         clientId
       );
       promise.resolve(true);

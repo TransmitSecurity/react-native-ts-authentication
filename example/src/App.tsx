@@ -188,7 +188,7 @@ export default class App extends React.Component<any, State> {
     TSAuthenticationSDKModule.initialize(
       appConfiguration.clientId,
       appConfiguration.domain,
-      `${appConfiguration.baseUrl}/cis/v1`
+      `${appConfiguration.baseUrl}/cis/v1/`
     );
   }
 

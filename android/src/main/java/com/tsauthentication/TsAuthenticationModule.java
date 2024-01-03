@@ -92,6 +92,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
           }
         }
       );
+    }
   }
 
   // Authentication
@@ -117,7 +118,6 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         );
       }
     }
-  }
 
   @ReactMethod
   @NonNull public void signTransaction(String username, Promise promise) {

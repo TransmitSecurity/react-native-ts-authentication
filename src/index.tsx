@@ -28,6 +28,10 @@ export namespace TSAuthenticationSDK {
     result: string;
   }
 
+  export interface DeviceInfo {
+    
+  }
+
   export const enum TSAuthenticationError {
     notInitialized,
     userNotFound,
@@ -44,8 +48,11 @@ export namespace TSAuthenticationSDK {
 
 export interface TSAuthenticationSDKModule {
   initialize: (clientId: string, domain: string, baseUrl: string) => Promise<boolean>;
-  register: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
-  authenticate: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
+  registerWebAuthn: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
+  authenticateWebAuthn: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
+  signWebauthnTransaction: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
+  getDeviceInfo: () => Promise<TSAuthenticationSDK.DeviceInfo>;
+  isWebAuthnSupported: () => Promise<boolean>;
 }
 
 class AuthenticationSDK implements TSAuthenticationSDKModule {
@@ -54,17 +61,24 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
     return TsAuthentication.initialize(clientId, domain, baseUrl);
   }
 
-  register(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationResult> {
-    return TsAuthentication.register(username, displayName);
+  registerWebAuthn(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationResult> {
+    return TsAuthentication.registerWebAuthn(username, displayName);
   }
 
-  authenticate(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
-    return TsAuthentication.authenticate(username);
+  authenticateWebAuthn(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
+    return TsAuthentication.authenticateWebAuthn(username);
   }
 
-  signTransaction(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
-    return TsAuthentication.signTransaction(username);
+  signWebauthnTransaction(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
+    return TsAuthentication.signWebauthnTransaction(username);
   }
 
+  getDeviceInfo(): Promise<TSAuthenticationSDK.DeviceInfo> {
+    return TsAuthentication.getDeviceInfo();
+  }
+
+  isWebAuthnSupported(): Promise<boolean> {
+    return TsAuthentication.isWebAuthnSupported();
+  }
 }
 export default new AuthenticationSDK();

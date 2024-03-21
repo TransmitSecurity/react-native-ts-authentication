@@ -27,8 +27,8 @@ class TsAuthentication: NSObject {
         }
     }
     
-    @objc(register:displayName:withResolver:withRejecter:)
-    func register(
+    @objc(registerWebAuthn:displayName:withResolver:withRejecter:)
+    func registerWebAuthn(
         _ username: String,
         displayName: String,
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
@@ -50,8 +50,8 @@ class TsAuthentication: NSObject {
             }
     }
     
-    @objc(authenticate:withResolver:withRejecter:)
-    func authenticate(
+    @objc(authenticateWebAuthn:withResolver:withRejecter:)
+    func authenticateWebAuthn(
         _ username: String,
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
             
@@ -69,8 +69,8 @@ class TsAuthentication: NSObject {
             }
     }
     
-    @objc(signTransaction:withResolver:withRejecter:)
-    func signTransaction(
+    @objc(signWebauthnTransaction:withResolver:withRejecter:)
+    func signWebauthnTransaction(
         _ username: String,
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
             

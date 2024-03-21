@@ -11,6 +11,8 @@ RCT_EXTERN_METHOD(authenticate:(NSString *)username withResolver:(RCTPromiseReso
                   withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(signTransaction:(NSString *)username withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(getDeviceInfo:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(isWebAuthnSupported:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 
 + (BOOL)requiresMainQueueSetup
 {

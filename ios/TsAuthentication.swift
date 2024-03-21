@@ -34,7 +34,7 @@ class TsAuthentication: NSObject {
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         
             runBlockOnMain { [weak self] in
-                TSAuthentication.shared.register(
+                TSAuthentication.shared.registerWebAuthn(
                     username: username,
                     displayName: displayName) { [weak self] results in
                         guard let self = self else { return }
@@ -56,7 +56,7 @@ class TsAuthentication: NSObject {
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
             
             runBlockOnMain {
-                TSAuthentication.shared.authenticate(username: username) { [weak self] results in
+                TSAuthentication.shared.authenticateWebAuthn(username: username) { [weak self] results in
                     guard let self = self else { return }
                     
                     switch results {
@@ -75,7 +75,7 @@ class TsAuthentication: NSObject {
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
             
             runBlockOnMain {
-                TSAuthentication.shared.signTransaction(username: username) { [weak self] results in
+                TSAuthentication.shared.signWebauthnTransaction(username: username) { [weak self] results in
                     guard let self = self else { return }
                     
                     switch results {
@@ -87,7 +87,35 @@ class TsAuthentication: NSObject {
                     }
             }
     }
+    
+    @objc(getDeviceInfo:withRejecter:)
+    func getDeviceInfo(
+        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+            
+            runBlockOnMain {
+                TSAuthentication.shared.getDeviceInfo() { [weak self] deviceInfo in
+                    guard let self = self else { return }
+                    
+                    switch deviceInfo {
+                        case .success(let response):
+                            resolve(["result": response])
+                        case .failure(let error):
+                            reject(self.kTag, error.localizedDescription, error)
+                        }
+                    }
+            }
+    }
+    
+    @objc(isWebAuthnSupported:withRejecter:)
+    func isWebAuthnSupported(
+        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
 
+            runBlockOnMain {
+                let isSupported = TSAuthentication.isWebAuthnSupported()
+                resolve(isSupported)
+            }
+    }
+    
     // MARK: - Threading
         
     private func runBlockOnMain(_ block: @escaping () -> Void) {

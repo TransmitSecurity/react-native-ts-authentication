@@ -98,10 +98,10 @@ class TsAuthentication: NSObject {
                     
                     switch deviceInfo {
                         case .success(let response):
-                            let info = ["result": [
+                            let info = [
                                 "publicKeyId": response.publicKeyId,
                                 "publicKey": response.publicKey
-                            ]]
+                            ]
                             resolve(info)
                         case .failure(let error):
                             reject(self.kTag, error.localizedDescription, error)

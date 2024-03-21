@@ -188,14 +188,14 @@ export default class App extends React.Component<any, State> {
       return;
     }
 
-    const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();
-    console.log("Device Info: ", deviceInfo);
-
-    TSAuthenticationSDKModule.initialize(
+    await TSAuthenticationSDKModule.initialize(
       appConfiguration.clientId,
       appConfiguration.domain,
       `${appConfiguration.baseUrl}/cis/v1/`
     );
+
+    const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();
+    console.log("Device Info: ", deviceInfo);
   }
 
   private isAppConfigured = (): boolean => {

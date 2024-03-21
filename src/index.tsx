@@ -29,7 +29,8 @@ export namespace TSAuthenticationSDK {
   }
 
   export interface DeviceInfo {
-    
+    publicKeyId: string;
+    publicKey: string;
   }
 
   export const enum TSAuthenticationError {

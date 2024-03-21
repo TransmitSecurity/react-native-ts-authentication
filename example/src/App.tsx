@@ -80,7 +80,7 @@ export default class App extends React.Component<any, State> {
 
   private signTransaction = async (username: string): Promise<void> => {
     try {
-      const response = await TSAuthenticationSDKModule.signTransaction(username);
+      const response = await TSAuthenticationSDKModule.signWebauthnTransaction(username);
       const accessToken = await this.mockServer.getAccessToken();
       const success = await this.mockServer.completeAuthentication(accessToken.token, response.result); // should change???
       if (success) {
@@ -117,7 +117,7 @@ export default class App extends React.Component<any, State> {
 
   private register = async (username: string, displayName: string): Promise<void> => {
     try {
-      const response = await TSAuthenticationSDKModule.register(username, displayName);
+      const response = await TSAuthenticationSDKModule.registerWebAuthn(username, displayName);
       const accessToken = await this.mockServer.getAccessToken();
       const success = await this.mockServer.completeRegistration(accessToken.token, response.result, username);
       if (success) {
@@ -135,7 +135,7 @@ export default class App extends React.Component<any, State> {
 
   private authenticate = async (username: string): Promise<void> => {
     try {
-      const response = await TSAuthenticationSDKModule.authenticate(username);
+      const response = await TSAuthenticationSDKModule.authenticateWebAuthn(username);
       const accessToken = await this.mockServer.getAccessToken();
       const success = await this.mockServer.completeAuthentication(accessToken.token, response.result);
       if (success) {
@@ -173,8 +173,6 @@ export default class App extends React.Component<any, State> {
         secret: config.secret
       }
       this.configureExampleApp(appConfiguration);
-    } else {
-      // this.showAppConfigurationDialog()
     }
   }
 
@@ -184,6 +182,14 @@ export default class App extends React.Component<any, State> {
       appConfiguration.clientId,
       appConfiguration.secret
     );
+
+    if (!TSAuthenticationSDKModule.isWebAuthnSupported()) {
+      this.setState({ errorMessage: 'WebAuthn is not supported on this device' });
+      return;
+    }
+
+    const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();
+    console.log("Device Info: ", deviceInfo);
 
     TSAuthenticationSDKModule.initialize(
       appConfiguration.clientId,

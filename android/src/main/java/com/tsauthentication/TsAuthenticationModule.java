@@ -40,8 +40,8 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     if(reactContext.getCurrentActivity() != null) {
       TSAuthentication.initialize(
         reactContext,
-        baseUrl,
-        clientId
+        clientId,
+        baseUrl
       );
       promise.resolve(true);
     }
@@ -76,12 +76,14 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
           @Override
           public void success(RegistrationResult registrationResult) {
             WritableMap map = new WritableNativeMap();
-            map.putString(registrationResult.result(), NAME);
+            map.putString("result", registrationResult.result());
+//            map.putString(registrationResult.result(), NAME);
             promise.resolve(map);
           }
           @Override
           public void error(TSWebAuthnRegistrationError tsWebAuthnRegistrationError) {
-            promise.reject(NAME, tsWebAuthnRegistrationError.toString());
+            promise.reject("result", tsWebAuthnRegistrationError.toString());
+//            promise.reject(NAME, tsWebAuthnRegistrationError.toString());
           }
         }
       );
@@ -99,12 +101,14 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             @Override
             public void success(AuthenticationResult authenticationResult) {
               WritableMap map = new WritableNativeMap();
-              map.putString(authenticationResult.result(), NAME);
+              map.putString("result", authenticationResult.result());
+//              map.putString(authenticationResult.result(), NAME);
               promise.resolve(map);
             }
             @Override
             public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
-              promise.reject(NAME, tsWebAuthnAuthenticationError.toString());
+              promise.reject("result", tsWebAuthnAuthenticationError.toString());
+//              promise.reject(NAME, tsWebAuthnAuthenticationError.toString());
             }
           });
       }
@@ -121,13 +125,15 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
           @Override
           public void success(AuthenticationResult authenticationResult) {
             WritableMap map = new WritableNativeMap();
-            map.putString(authenticationResult.result(), NAME);
+            map.putString("result", authenticationResult.result());
+//            map.putString(authenticationResult.result(), NAME);
             promise.resolve(map);
           }
 
           @Override
           public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
-            promise.reject(NAME, tsWebAuthnAuthenticationError.toString());
+            promise.reject("result", tsWebAuthnAuthenticationError.toString());
+//            promise.reject(NAME, tsWebAuthnAuthenticationError.toString());
           }
         }
       );
@@ -150,7 +156,8 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
           @Override
           public void error(TSDeviceInfoError tsDeviceInfoError) {
-            promise.reject(NAME, tsDeviceInfoError.toString());
+            promise.reject("result", tsDeviceInfoError.toString());
+//            promise.reject(NAME, tsDeviceInfoError.toString());
           }
         }
       );

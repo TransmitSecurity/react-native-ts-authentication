@@ -1,5 +1,7 @@
 package com.tsauthentication;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -75,6 +77,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         new TSAuthCallback<RegistrationResult, TSWebAuthnRegistrationError>() {
           @Override
           public void success(RegistrationResult registrationResult) {
+            Log.e("TS", ">>> registerWebAuthn success " + registrationResult.result());
             WritableMap map = new WritableNativeMap();
             map.putString("result",registrationResult.result());
             promise.resolve(map);

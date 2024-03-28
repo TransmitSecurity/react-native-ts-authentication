@@ -118,6 +118,7 @@ export default class App extends React.Component<any, State> {
   private register = async (username: string, displayName: string): Promise<void> => {
     try {
       const response = await TSAuthenticationSDKModule.registerWebAuthn(username, displayName);
+      console.log("response.result: ", response.result);
       const accessToken = await this.mockServer.getAccessToken();
       const success = await this.mockServer.completeRegistration(accessToken.token, response.result, username);
       if (success) {

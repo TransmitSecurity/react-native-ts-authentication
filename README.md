@@ -96,10 +96,10 @@ private onAppReady = async (): Promise<void> => {
 ```js
 onStartRegistrationProcess = async (): Promise<void> => {
     try {
-        const response = await TSAuthenticationSDKModule.register(username, displayName);
+        const response = await TSAuthenticationSDKModule.registerWebAuthn(username, displayName);
         // use the response.result string to complete a successful registration in your backend.
     } catch (error) {
-        console.error(`Error authentication the user: ${error}`);
+        console.error(`Error during registration process: ${error}`);
     }
 }
 ```
@@ -108,10 +108,10 @@ onStartRegistrationProcess = async (): Promise<void> => {
 ```js
 onStartAuthenticationProcess = async (): Promise<void> => {
     try {
-        const response = await TSAuthenticationSDKModule.authenticate(username);
+        const response = await TSAuthenticationSDKModule.authenticateWebAuthn(username);
         // use the response.result string to complete a successful authentication in your backend.
     } catch (error) {
-        console.error(`Error authentication the user: ${error}`);
+        console.error(`Error authenticating the user: ${error}`);
     }
 }
 ```
@@ -120,10 +120,32 @@ onStartAuthenticationProcess = async (): Promise<void> => {
 ```js
 onStartSignTransactionProcess = async (): Promise<void> => {
     try {
-        const response = await TSAuthenticationSDKModule.signTransaction(username);
+        const response = await TSAuthenticationSDKModule.signWebauthnTransaction(username);
         // use the response.result string to complete a signing a transaction in your backend.
     } catch (error) {
-        console.error(`Error authentication the user: ${error}`);
+        console.error(`Error signing a transaction: ${error}`);
+    }
+}
+```
+
+#### Get Device Info
+```js
+onGetDeviceInfo = async (): Promise<void> => {
+    try {
+        const response = await TSAuthenticationSDKModule.getDeviceInfo();
+    } catch (error) {
+        console.error(`Error getting device info: ${error}`);
+    }
+}
+```
+
+#### Check if the device supports webAuthn
+```js
+onIsWebAuthenSupported = async (): Promise<void> => {
+    try {
+        const isSupported = await TSAuthenticationSDKModule.isWebAuthnSupported();
+    } catch (error) {
+        console.error(`Error checking if the device supports webAuthn: ${error}`);
     }
 }
 ```

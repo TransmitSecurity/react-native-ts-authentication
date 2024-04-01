@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">TsAuthenticationExample</string>
+  <string name="asset_statements" translatable="false">
+    [{
+      \"include\": \"https://mobile.idsec-dev.com/.well-known/assetlinks.json\"
+    }]
+    </string>
 </resources>

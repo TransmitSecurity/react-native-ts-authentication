@@ -21,7 +21,6 @@ export type State = {
 
 export type ExampleAppConfiguration = {
   clientId: string;
-  domain: string;
   baseUrl: string;
   secret: string;
 }
@@ -168,7 +167,6 @@ export default class App extends React.Component<any, State> {
     if (this.isAppConfigured()) {
       const appConfiguration: ExampleAppConfiguration = {
         clientId: config.clientId,
-        domain: config.domain,
         baseUrl: `${config.baseUrl}`,
         secret: config.secret
       }
@@ -190,7 +188,6 @@ export default class App extends React.Component<any, State> {
 
     await TSAuthenticationSDKModule.initialize(
       appConfiguration.clientId,
-      appConfiguration.domain,
       `${appConfiguration.baseUrl}/cis/v1/`
     );
 
@@ -199,7 +196,7 @@ export default class App extends React.Component<any, State> {
   }
 
   private isAppConfigured = (): boolean => {
-    return !(config.clientId === "REPLACE_WITH_CLIENT_ID" || config.domain === "REPLACE_WITH_DOMAIN");
+    return !(config.clientId === "REPLACE_WITH_CLIENT_ID");
   }
 
   private randomString = (): string => {

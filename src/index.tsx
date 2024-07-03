@@ -48,7 +48,8 @@ export namespace TSAuthenticationSDK {
 }
 
 export interface TSAuthenticationSDKModule {
-  initialize: (clientId: string, domain: string, baseUrl: string) => Promise<boolean>;
+  initializeSDK: () => Promise<boolean>;
+  initialize: (clientId: string, baseUrl: string) => Promise<boolean>;
   registerWebAuthn: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
   authenticateWebAuthn: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
   signWebauthnTransaction: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
@@ -58,8 +59,12 @@ export interface TSAuthenticationSDKModule {
 
 class AuthenticationSDK implements TSAuthenticationSDKModule {
 
-  initialize(clientId: string, domain: string, baseUrl: string): Promise<boolean> {
-    return TsAuthentication.initialize(clientId, domain, baseUrl);
+  initializeSDK(): Promise<boolean> {
+    return TsAuthentication.initializeSDK();
+  }
+
+  initialize(clientId: string, baseUrl: string): Promise<boolean> {
+    return TsAuthentication.initialize(clientId, baseUrl);
   }
 
   registerWebAuthn(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationResult> {

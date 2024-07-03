@@ -5,14 +5,27 @@ class TsAuthentication: NSObject {
     
     private let kTag = "TSAuthentication"
     
-    @objc(initialize:domain:baseUrl:withResolver:withRejecter:)
+    @objc(initializeSDK:withRejecter:)
+    func initializeSDK(
+        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+            runBlockOnMain {
+                do {
+                    try TSAuthentication.shared.initializeSDK()
+                    resolve(true)
+                } catch {
+                    logger.log("Finished initializeSDK with error: \(error)")
+                    reject(self.kTag, nil, error)
+                }
+            }
+    }
+    
+    @objc(initialize:baseUrl:withResolver:withRejecter:)
     func initialize(
         _ clientId: String,
-        domain: String,
         baseUrl: String,
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         
-        guard !clientId.isEmpty, !domain.isEmpty, !baseUrl.isEmpty else {
+        guard !clientId.isEmpty, !baseUrl.isEmpty else {
             reject("Invalid params provided to .initialize", nil, nil)
             return
         }
@@ -20,8 +33,7 @@ class TsAuthentication: NSObject {
         runBlockOnMain {
             TSAuthentication.shared.initialize(
                 baseUrl: baseUrl,
-                clientId: clientId,
-                configuration: TSConfiguration(domain: domain)
+                clientId: clientId
             )
             resolve(true)
         }

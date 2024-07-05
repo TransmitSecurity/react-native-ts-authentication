@@ -28,6 +28,16 @@ export namespace TSAuthenticationSDK {
     result: string;
   }
 
+  export interface TSBiometricsRegistrationResult {
+    publicKey: string;
+    publicKeyId: string;
+  }
+
+  export interface TSBiometricsAuthenticationResult {
+    publicKeyId: string;
+    signature: string;
+  }
+
   export interface DeviceInfo {
     publicKeyId: string;
     publicKey: string;
@@ -53,6 +63,8 @@ export interface TSAuthenticationSDKModule {
   registerWebAuthn: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
   authenticateWebAuthn: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
   signWebauthnTransaction: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
+  registerNativeBiometrics: (username: string) => Promise<TSAuthenticationSDK.TSBiometricsRegistrationResult>;
+  authenticateNativeBiometrics: (username: string, challenge: string) => Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult>;
   getDeviceInfo: () => Promise<TSAuthenticationSDK.DeviceInfo>;
   isWebAuthnSupported: () => Promise<boolean>;
 }
@@ -77,6 +89,14 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
 
   signWebauthnTransaction(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
     return TsAuthentication.signWebauthnTransaction(username);
+  }
+
+  registerNativeBiometrics(username: string): Promise<TSAuthenticationSDK.TSBiometricsRegistrationResult> {
+    return TsAuthentication.registerNativeBiometrics(username);
+  }
+
+  authenticateNativeBiometrics(username: string, challenge: string): Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult> {
+    return TsAuthentication.authenticateNativeBiometrics(username, challenge);
   }
 
   getDeviceInfo(): Promise<TSAuthenticationSDK.DeviceInfo> {

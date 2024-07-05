@@ -5,6 +5,8 @@ class TsAuthentication: NSObject {
     
     private let kTag = "TSAuthentication"
     
+    // MARK: - SDK Init
+    
     @objc(initializeSDK:withRejecter:)
     func initializeSDK(
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
@@ -38,6 +40,8 @@ class TsAuthentication: NSObject {
             resolve(true)
         }
     }
+    
+    // MARK: - WebAuthn
     
     @objc(registerWebAuthn:displayName:withResolver:withRejecter:)
     func registerWebAuthn(
@@ -81,6 +85,8 @@ class TsAuthentication: NSObject {
             }
     }
     
+    // MARK: - Sign Transaction
+    
     @objc(signWebauthnTransaction:withResolver:withRejecter:)
     func signWebauthnTransaction(
         _ username: String,
@@ -99,6 +105,63 @@ class TsAuthentication: NSObject {
                     }
             }
     }
+    
+    // MARK: - Native Biometrics
+    
+    @objc(registerNativeBiometrics:withResolver:withRejecter:)
+    func registerNativeBiometrics(
+        _ username: String,
+        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+            
+            runBlockOnMain { [weak self] in
+                TSAuthentication.shared.registerNativeBiometrics(username: username) { [weak self] results in
+                    guard let self = self else { return }
+                    
+                    switch results {
+                    case .success(let response):
+                        let publicKey = response.publicKey
+                        let publicKeyId = response.publicKeyId
+                        resolve([
+                            "publicKey": publicKey,
+                            "publicKeyId": publicKeyId
+                        ])
+                    case .failure(let error):
+                        reject(self.kTag, error.localizedDescription, error)
+                    }
+                }
+            }
+        }
+    
+    @objc(authenticateNativeBiometrics:challenge:withResolver:withRejecter:)
+    func authenticateNativeBiometrics(
+        _ username: String,
+        challenge: String,
+        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+            
+            runBlockOnMain {
+                TSAuthentication.shared.authenticateNativeBiometrics(
+                    username: username, challenge: challenge
+                ) { [weak self] result in
+                    guard let self = self else { return }
+                    
+                    switch result {
+                    case .success(let response):
+                        let publicKeyId = response.publicKeyId
+                        let signature = response.signature
+                        resolve([
+                            "publicKeyId": publicKeyId,
+                            "signature": signature
+                        ])
+                    case .failure(let error):
+                        if case .nativeBiometricsError(let nativeBiometricsError) = error {
+                            reject(self.kTag, error.localizedDescription, error)
+                        }
+                    }
+                }
+            }
+    }
+ 
+    // MARK: - Utility
     
     @objc(getDeviceInfo:withRejecter:)
     func getDeviceInfo(

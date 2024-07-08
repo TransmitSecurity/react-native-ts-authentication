@@ -5,4 +5,7 @@
       \"include\": \"https://mobile.idsec-dev.com/.well-known/assetlinks.json\"
     }]
     </string>
+    <string name="BiometricPromptTitle">Authenticate with Biometrics</string>
+    <string name="BiometricPromptSubtitle">Use your device biometrics to authenticate.</string>
+    <string name="BiometricPromptCancel">Cancel</string>
 </resources>

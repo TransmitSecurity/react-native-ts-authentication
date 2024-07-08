@@ -86,7 +86,6 @@ private onAppReady = async (): Promise<void> => {
 
     TSAuthenticationSDKModule.initialize(
       "YOUR_CLIENT_ID",
-      "YOUR_DOMAIN",
       `${baseURL}/cis/v1`
     );
 }

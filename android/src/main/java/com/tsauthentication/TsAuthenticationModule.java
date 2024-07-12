@@ -48,7 +48,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  @NonNull public void initialize(String clientId, String domain, String baseUrl, Promise promise) {
+  @NonNull public void initialize(String clientId, String baseUrl, Promise promise) {
 
     if(reactContext.getCurrentActivity() != null) {
       TSAuthentication.initialize(
@@ -158,8 +158,9 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
           @Override
           public void success(TSBiometricsRegistrationResult tsBiometricsRegistrationResult) {
             WritableMap map = new WritableNativeMap();
-            map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
             map.putString("publicKeyId", tsBiometricsRegistrationResult.keyId());
+            map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
+            map.putString("os", "Android");
             promise.resolve(map);
           }
 
@@ -178,7 +179,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
       AppCompatActivity appCompatActivity = getAppCompatActivity();
       if (appCompatActivity == null) {
-        promise.reject("result", "urrent activity is not an instance of AppCompatActivity");
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
         return;
       }
 

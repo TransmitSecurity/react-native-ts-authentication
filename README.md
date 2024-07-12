@@ -40,13 +40,13 @@ To integrate this module, you'll need to configure an application.
 npm install react-native-ts-authentication
 ```
 
-#### iOS Setup
+### iOS Setup
 You might need to execute `pod install` in your project's `/ios` folder and set your minimum iOS target to 15.0 in your Podfile (e.g `platform :ios, 15.0`).
 
 * Add project Capabilities as described [iOS quick start](https://developer.transmitsecurity.com/guides/webauthn/quick_start_sdk_ios/)
 * Update YOUR Bundle ID and setup associated domains as described in the [iOS quick start](https://developer.transmitsecurity.com/guides/webauthn/quick_start_sdk_ios/)
 
-#### Android Setup
+### Android Setup
 
 Add to `app/build.gradle` under repositories
 
@@ -58,16 +58,14 @@ repositories {
   }
 }
 ```
-Note:  
-As for projects on Gradle 8+ and Kotlin 1.8+ build will fail if the JDK version between 
-compileKotlin and compileJava and jvmTarget are not aligned. 
-
-This won't be necessary anymore from React Native 0.73. More on this:
-https://kotlinlang.org/docs/whatsnew18.html#obligatory-check-for-jvm-targets-of-related-kotlin-and-java-compile-tasks
+#### Note:  
+As for projects on Gradle 8+ and Kotlin 1.8+ build will fail if the JDK version between compileKotlin and compileJava and jvmTarget are not aligned.
+<br> 
+This won't be necessary anymore from React Native 0.73. More on this: https://kotlinlang.org/docs/whatsnew18.html#obligatory-check-for-jvm-targets-of-related-kotlin-and-java-compile-tasks
 
 ## Usage
 
-#### Module Setup
+### Module Setup
 ```js
 import TSAuthenticationSDKModule from 'react-native-ts-authentication';
 
@@ -126,6 +124,49 @@ onStartSignTransactionProcess = async (): Promise<void> => {
     }
 }
 ```
+
+### Native Biometrics
+• For iOS, ensure that you add the necessary permissions to use FaceID in your app's Info.plist file.<br>
+• For Android, add the following strings to your app's strings.xml file:
+
+```xml
+<resources>
+    <string name="BiometricPromptTitle">Authenticate with Biometrics</string>
+    <string name="BiometricPromptSubtitle">Use your device biometrics to authenticate.</string>
+    <string name="BiometricPromptCancel">Cancel</string>
+</resources>
+```
+
+#### Register Native Biometrics
+```js
+onRegisterNativeBiometics = async (username: string): Promise<void> => {
+    try {
+        const response = await TSAuthenticationSDKModule.registerNativeBiometrics(username);
+        // use the response.result string to complete biometrics registration in your backend.
+    } catch (error) {
+        console.error(`Error signing a transaction: ${error}`);
+    }
+}
+```
+
+#### Authenticate Biometrics
+```js
+authenticateWithNativeBiometrics = async (username: string): Promise<void> => {
+    try {
+        const challenge = this.randomString();
+        const response = await TSAuthenticationSDKModule.authenticateNativeBiometrics(username, challenge);
+        // use the response.result string to complete biometrics authentication in your backend.
+    } catch (error) {
+        console.error(`Error signing a transaction: ${error}`);
+    }
+}
+
+private randomString = (): string => {
+    return (Math.random() + 1).toString(36).substring(7);
+}
+```
+
+### Information about the device
 
 #### Get Device Info
 ```js

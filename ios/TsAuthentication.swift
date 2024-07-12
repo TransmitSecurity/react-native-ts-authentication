@@ -123,7 +123,8 @@ class TsAuthentication: NSObject {
                         let publicKeyId = response.publicKeyId
                         resolve([
                             "publicKey": publicKey,
-                            "publicKeyId": publicKeyId
+                            "publicKeyId": publicKeyId,
+                            "os": "iOS"
                         ])
                     case .failure(let error):
                         reject(self.kTag, error.localizedDescription, error)

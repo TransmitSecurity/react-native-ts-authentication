@@ -76,7 +76,7 @@ class MockServer {
         const formData = {
             "publicKeyId": biometricsRegistrationResults.publicKeyId,
             "publicKey": biometricsRegistrationResults.publicKey,
-            "os": "iOS"
+            "os": biometricsRegistrationResults.os
         };
         
         try {

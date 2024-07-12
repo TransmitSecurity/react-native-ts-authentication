@@ -66,6 +66,40 @@ This won't be necessary anymore from React Native 0.73. More on this: https://ko
 ## Usage
 
 ### Module Setup
+
+#### iOS
+1. Open your project's `.xcworkspace` found under `YOUR_PROJECT_PATH/iOS` in Xcode.
+2. Create a plist file named TransmitSecurity.plist in your Application with the following content. CLIENT_ID is configured in your Transmit server. Make sure the file is linked to your target.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>credentials</key>
+    <dict>
+        <!-- Use api.eu.transmitsecurity.io for EU, api.ca.transmitsecurity.io for CA -->
+        <key>baseUrl</key>
+        <string>https://api.transmitsecurity.io</string>
+        <key>clientId</key>
+        <string>CLIENT_ID</string>
+    </dict>
+</dict>
+</plist>
+```
+#### Android
+1. Open your Android manifest XML file, usually located at `android/app/src/main`.
+2. Update the strings.xml file in your Application with the following content. The CLIENT_ID should be replaced with your client ID
+
+```xml
+<resources>
+    <!-- Transmit Security Credentials -->
+    <string name="transmit_security_app_id">"default_application"</string>
+    <string name="transmit_security_client_id">"CLIENT_ID"</string>
+    <string name="transmit_security_base_url">https://api.transmitsecurity.io</string>
+</resources>
+```
+
 ```js
 import TSAuthenticationSDKModule from 'react-native-ts-authentication';
 
@@ -75,17 +109,20 @@ componentDidMount(): void {
 }
 
 private onAppReady = async (): Promise<void> => {
-    /* Initialize the module with parameters: 
-        1. ClientID obtained from the application settings in the Transmit portal
-        2. BaseURL can be "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
+    TSAuthenticationSDKModule.initializeSDK();
+    
+    /* 
+        Instead of using Plist and strings.xml, you can initialize the module with parameters: 
+            1. ClientID obtained from the application settings in the Transmit portal
+            2. BaseURL can be "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
 
+        const baseURL = "https://api.transmitsecurity.io";
+
+        TSAuthenticationSDKModule.initialize(
+            "YOUR_CLIENT_ID",
+            `${baseURL}/cis/v1`
+        );
     */
-    const baseURL = "https://api.transmitsecurity.io";
-
-    TSAuthenticationSDKModule.initialize(
-      "YOUR_CLIENT_ID",
-      `${baseURL}/cis/v1`
-    );
 }
 ```
 

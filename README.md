@@ -114,13 +114,11 @@ private onAppReady = async (): Promise<void> => {
     /* 
         Instead of using Plist and strings.xml, you can initialize the module with parameters: 
             1. ClientID obtained from the application settings in the Transmit portal
-            2. BaseURL can be "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
-
-        const baseURL = "https://api.transmitsecurity.io";
+            2. Custom Domain - Can be null (or undefined if not using BaseURL)
+            3. BaseURL - Can be null or undefined. "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
 
         TSAuthenticationSDKModule.initialize(
-            "YOUR_CLIENT_ID",
-            `${baseURL}/cis/v1`
+            "YOUR_CLIENT_ID"
         );
     */
 }

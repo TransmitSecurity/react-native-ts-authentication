@@ -3,7 +3,7 @@
 @interface RCT_EXTERN_MODULE(TsAuthentication, NSObject)
 
 RCT_EXTERN_METHOD(initializeSDK:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
-RCT_EXTERN_METHOD(initialize:(NSString*)clientId baseUrl:(NSString*)baseUrl withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(initialize:(NSString*)clientId domain:(NSString*)domain baseUrl:(NSString*)baseUrl withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(registerWebAuthn:(NSString *)username displayName:(NSString*)displayName withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(authenticateWebAuthn:(NSString *)username withResolver:(RCTPromiseResolveBlock)resolve

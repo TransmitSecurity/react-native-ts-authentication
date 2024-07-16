@@ -60,7 +60,7 @@ export namespace TSAuthenticationSDK {
 
 export interface TSAuthenticationSDKModule {
   initializeSDK: () => Promise<boolean>;
-  initialize: (clientId: string, baseUrl: string) => Promise<boolean>;
+  initialize: (clientId: string, domain?: string | null | undefined, baseUrl?: string | null | undefined) => Promise<boolean>;
   registerWebAuthn: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
   authenticateWebAuthn: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
   signWebauthnTransaction: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
@@ -76,8 +76,10 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
     return TsAuthentication.initializeSDK();
   }
 
-  initialize(clientId: string, baseUrl: string): Promise<boolean> {
-    return TsAuthentication.initialize(clientId, baseUrl);
+  initialize(clientId: string, domain?: string | null | undefined, baseUrl?: string | null | undefined): Promise<boolean> {
+    const isDomain = domain ? domain : "";
+    const isBaseUrl = baseUrl ? baseUrl : "https://api.transmitsecurity.io/";
+    return TsAuthentication.initialize(clientId, isDomain, isBaseUrl);
   }
 
   registerWebAuthn(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationResult> {

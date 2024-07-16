@@ -21,9 +21,10 @@ class TsAuthentication: NSObject {
             }
     }
     
-    @objc(initialize:baseUrl:withResolver:withRejecter:)
+    @objc(initialize:domain:baseUrl:withResolver:withRejecter:)
     func initialize(
         _ clientId: String,
+        domain: String,
         baseUrl: String,
         resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         
@@ -33,10 +34,18 @@ class TsAuthentication: NSObject {
         }
         
         runBlockOnMain {
-            TSAuthentication.shared.initialize(
-                baseUrl: baseUrl,
-                clientId: clientId
-            )
+            if domain.count > 0 {
+                TSAuthentication.shared.initialize(
+                    baseUrl: baseUrl,
+                    clientId: clientId,
+                    domain: domain
+                )
+            } else {
+                TSAuthentication.shared.initialize(
+                    baseUrl: baseUrl,
+                    clientId: clientId
+                )
+            }
             resolve(true)
         }
     }

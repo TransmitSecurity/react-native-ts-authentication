@@ -219,7 +219,10 @@ export default class App extends React.Component<any, State> {
         baseUrl: `${config.baseUrl}`,
         secret: config.secret
       }
+
       this.configureExampleApp(appConfiguration);
+    } else {
+      console.log(`Please configure the app by updating the 'config.ts' file`);
     }
   }
 
@@ -236,8 +239,7 @@ export default class App extends React.Component<any, State> {
     }
 
     await TSAuthenticationSDKModule.initialize(
-      appConfiguration.clientId,
-      `${appConfiguration.baseUrl}/cis/v1/`
+      appConfiguration.clientId
     );
 
     const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();

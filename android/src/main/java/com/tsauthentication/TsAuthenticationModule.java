@@ -63,7 +63,8 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         TSAuthentication.initialize(
           reactContext,
           clientId,
-          baseUrl
+          baseUrl,
+          null
         );
       }
       promise.resolve(true);

@@ -40,13 +40,13 @@ To integrate this module, you'll need to configure an application.
 npm install react-native-ts-authentication
 ```
 
-#### iOS Setup
+### iOS Setup
 You might need to execute `pod install` in your project's `/ios` folder and set your minimum iOS target to 15.0 in your Podfile (e.g `platform :ios, 15.0`).
 
 * Add project Capabilities as described [iOS quick start](https://developer.transmitsecurity.com/guides/webauthn/quick_start_sdk_ios/)
 * Update YOUR Bundle ID and setup associated domains as described in the [iOS quick start](https://developer.transmitsecurity.com/guides/webauthn/quick_start_sdk_ios/)
 
-#### Android Setup
+### Android Setup
 
 Add to `app/build.gradle` under repositories
 
@@ -58,16 +58,48 @@ repositories {
   }
 }
 ```
-Note:  
-As for projects on Gradle 8+ and Kotlin 1.8+ build will fail if the JDK version between 
-compileKotlin and compileJava and jvmTarget are not aligned. 
-
-This won't be necessary anymore from React Native 0.73. More on this:
-https://kotlinlang.org/docs/whatsnew18.html#obligatory-check-for-jvm-targets-of-related-kotlin-and-java-compile-tasks
+#### Note:  
+As for projects on Gradle 8+ and Kotlin 1.8+ build will fail if the JDK version between compileKotlin and compileJava and jvmTarget are not aligned.
+<br> 
+This won't be necessary anymore from React Native 0.73. More on this: https://kotlinlang.org/docs/whatsnew18.html#obligatory-check-for-jvm-targets-of-related-kotlin-and-java-compile-tasks
 
 ## Usage
 
-#### Module Setup
+### Module Setup
+
+#### iOS
+1. Open your project's `.xcworkspace` found under `YOUR_PROJECT_PATH/iOS` in Xcode.
+2. Create a plist file named TransmitSecurity.plist in your Application with the following content. CLIENT_ID is configured in your Transmit server. Make sure the file is linked to your target.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>credentials</key>
+    <dict>
+        <!-- Use api.eu.transmitsecurity.io for EU, api.ca.transmitsecurity.io for CA -->
+        <key>baseUrl</key>
+        <string>https://api.transmitsecurity.io</string>
+        <key>clientId</key>
+        <string>CLIENT_ID</string>
+    </dict>
+</dict>
+</plist>
+```
+#### Android
+1. Open your Android manifest XML file, usually located at `android/app/src/main`.
+2. Update the strings.xml file in your Application with the following content. The CLIENT_ID should be replaced with your client ID
+
+```xml
+<resources>
+    <!-- Transmit Security Credentials -->
+    <string name="transmit_security_app_id">"default_application"</string>
+    <string name="transmit_security_client_id">"CLIENT_ID"</string>
+    <string name="transmit_security_base_url">https://api.transmitsecurity.io</string>
+</resources>
+```
+
 ```js
 import TSAuthenticationSDKModule from 'react-native-ts-authentication';
 
@@ -77,18 +109,18 @@ componentDidMount(): void {
 }
 
 private onAppReady = async (): Promise<void> => {
-    /* Initialize the module with parameters: 
-        1. ClientID obtained from the application settings in the Transmit portal
-        2. BaseURL can be "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
+    TSAuthenticationSDKModule.initializeSDK();
+    
+    /* 
+        Instead of using Plist and strings.xml, you can initialize the module with parameters: 
+            1. ClientID obtained from the application settings in the Transmit portal
+            2. Custom Domain - Can be null (or undefined if not using BaseURL)
+            3. BaseURL - Can be null or undefined. "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
 
+        TSAuthenticationSDKModule.initialize(
+            "YOUR_CLIENT_ID"
+        );
     */
-    const baseURL = "https://api.transmitsecurity.io";
-
-    TSAuthenticationSDKModule.initialize(
-      "YOUR_CLIENT_ID",
-      "YOUR_DOMAIN",
-      `${baseURL}/cis/v1`
-    );
 }
 ```
 
@@ -127,6 +159,49 @@ onStartSignTransactionProcess = async (): Promise<void> => {
     }
 }
 ```
+
+### Native Biometrics
+• For iOS, ensure that you add the necessary permissions to use FaceID in your app's Info.plist file.<br>
+• For Android, add the following strings to your app's strings.xml file:
+
+```xml
+<resources>
+    <string name="BiometricPromptTitle">Authenticate with Biometrics</string>
+    <string name="BiometricPromptSubtitle">Use your device biometrics to authenticate.</string>
+    <string name="BiometricPromptCancel">Cancel</string>
+</resources>
+```
+
+#### Register Native Biometrics
+```js
+onRegisterNativeBiometics = async (username: string): Promise<void> => {
+    try {
+        const response = await TSAuthenticationSDKModule.registerNativeBiometrics(username);
+        // use the response.result string to complete biometrics registration in your backend.
+    } catch (error) {
+        console.error(`Error signing a transaction: ${error}`);
+    }
+}
+```
+
+#### Authenticate Biometrics
+```js
+authenticateWithNativeBiometrics = async (username: string): Promise<void> => {
+    try {
+        const challenge = this.randomString();
+        const response = await TSAuthenticationSDKModule.authenticateNativeBiometrics(username, challenge);
+        // use the response.result string to complete biometrics authentication in your backend.
+    } catch (error) {
+        console.error(`Error signing a transaction: ${error}`);
+    }
+}
+
+private randomString = (): string => {
+    return (Math.random() + 1).toString(36).substring(7);
+}
+```
+
+### Information about the device
 
 #### Get Device Info
 ```js

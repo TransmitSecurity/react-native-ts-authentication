@@ -21,7 +21,6 @@ export type State = {
 
 export type ExampleAppConfiguration = {
   clientId: string;
-  domain: string;
   baseUrl: string;
   secret: string;
 }
@@ -49,7 +48,10 @@ export default class App extends React.Component<any, State> {
       <SafeAreaView style={{ flex: 1 }}>
         {
           this.state.currentScreen === AppScreen.Home ? (
-            <HomeScreen onStartAuthentication={this.onStartAuthentication} errorMessage={this.state.errorMessage}
+            <HomeScreen 
+              onStartAuthentication={this.onStartAuthentication}
+              onStartNativeBiometrics={this.onStartNativeBiometrics}
+              errorMessage={this.state.errorMessage}
             />
           ) : (
             <LoggedIn 
@@ -94,7 +96,57 @@ export default class App extends React.Component<any, State> {
     }
   }
 
-  // Authentication Process Handlers
+  // Native Biometrics
+
+  public onStartNativeBiometrics = async (rawUsername: string): Promise<void> => {
+    if (rawUsername === '') {
+      this.setState({ errorMessage: 'Please enter a username' });
+      return;
+    }
+
+    const username = rawUsername.toLowerCase();
+    this.setState({ errorMessage: '' });
+
+    if (localUserStore.isUserIDStored(username)) {
+      this.authenticateWithNativeBiometrics(username);
+    } else {
+      this.registerNativeBiometics(username);
+    }
+  }
+
+   private registerNativeBiometics = async (username: string): Promise<void> => {
+    try {
+      const response = await TSAuthenticationSDKModule.registerNativeBiometrics(username);
+      const accessToken = await this.mockServer.getAccessToken();
+      const success = await this.mockServer.completeBiometricsRegistration(accessToken.token, response);
+      if (success) {
+        localUserStore.addUserID(username);
+        this.navigateToAuthenticatedUserScreen(username, true);
+      } else {
+        this.setState({ errorMessage: 'Registration failed' });
+      }
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+
+  private authenticateWithNativeBiometrics = async (username: string): Promise<void> => {
+    try {
+      const challenge = this.randomString();
+      const response = await TSAuthenticationSDKModule.authenticateNativeBiometrics(username, challenge);
+      const accessToken = await this.mockServer.getAccessToken();
+      const success = await this.mockServer.completeBiometricsAuthentication(accessToken.token, username, challenge, response);
+      if (success) {
+        this.navigateToAuthenticatedUserScreen(username, false);
+      } else {
+        this.setState({ errorMessage: 'Authentication failed' });
+      }
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+
+  // WebAuthn Registration / Authentication
 
   public onStartAuthentication = async (rawUsername: string): Promise<void> => {
     if (rawUsername === '') {
@@ -106,16 +158,14 @@ export default class App extends React.Component<any, State> {
     this.setState({ errorMessage: '' });
 
     if (localUserStore.isUserIDStored(username)) {
-      this.authenticate(username);
+      this.authenticateWithWebAuthn(username);
     } else {
       const displayName = username + "_" + this.randomString();
-      this.register(username, displayName);
+      this.registerWebAuthn(username, displayName);
     }
   }
 
-  // Registration
-
-  private register = async (username: string, displayName: string): Promise<void> => {
+  private registerWebAuthn = async (username: string, displayName: string): Promise<void> => {
     try {
       const response = await TSAuthenticationSDKModule.registerWebAuthn(username, displayName);
       const accessToken = await this.mockServer.getAccessToken();
@@ -131,9 +181,7 @@ export default class App extends React.Component<any, State> {
     }
   }
 
-  // Authentication
-
-  private authenticate = async (username: string): Promise<void> => {
+  private authenticateWithWebAuthn = async (username: string): Promise<void> => {
     try {
       const response = await TSAuthenticationSDKModule.authenticateWebAuthn(username);
       const accessToken = await this.mockServer.getAccessToken();
@@ -168,11 +216,13 @@ export default class App extends React.Component<any, State> {
     if (this.isAppConfigured()) {
       const appConfiguration: ExampleAppConfiguration = {
         clientId: config.clientId,
-        domain: config.domain,
         baseUrl: `${config.baseUrl}`,
         secret: config.secret
       }
+
       this.configureExampleApp(appConfiguration);
+    } else {
+      console.log(`Please configure the app by updating the 'config.ts' file`);
     }
   }
 
@@ -189,9 +239,7 @@ export default class App extends React.Component<any, State> {
     }
 
     await TSAuthenticationSDKModule.initialize(
-      appConfiguration.clientId,
-      appConfiguration.domain,
-      `${appConfiguration.baseUrl}/cis/v1/`
+      appConfiguration.clientId
     );
 
     const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();
@@ -199,7 +247,7 @@ export default class App extends React.Component<any, State> {
   }
 
   private isAppConfigured = (): boolean => {
-    return !(config.clientId === "REPLACE_WITH_CLIENT_ID" || config.domain === "REPLACE_WITH_DOMAIN");
+    return !(config.clientId === "REPLACE_WITH_CLIENT_ID");
   }
 
   private randomString = (): string => {

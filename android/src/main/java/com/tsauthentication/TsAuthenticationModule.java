@@ -1,6 +1,12 @@
 package com.tsauthentication;
 
+import android.app.Activity;
+import android.content.Context;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -15,9 +21,15 @@ import com.transmit.authentication.RegistrationResult;
 import com.transmit.authentication.TSAuthCallback;
 import com.transmit.authentication.TSAuthentication;
 import com.transmit.authentication.TSWebAuthnRegistrationError;
+import com.transmit.authentication.biometrics.BiometricPromptTexts;
+import com.transmit.authentication.biometrics.TSBiometricsAuthError;
+import com.transmit.authentication.biometrics.TSBiometricsAuthResult;
+import com.transmit.authentication.biometrics.TSBiometricsRegistrationError;
+import com.transmit.authentication.biometrics.TSBiometricsRegistrationResult;
 import com.transmit.authentication.network.completereg.DeviceInfo;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @ReactModule(name = TsAuthenticationModule.NAME)
 public class TsAuthenticationModule extends ReactContextBaseJavaModule {
@@ -39,10 +51,22 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @NonNull public void initialize(String clientId, String domain, String baseUrl, Promise promise) {
 
     if(reactContext.getCurrentActivity() != null) {
-      TSAuthentication.initialize(
-        reactContext,
-        clientId
-      );
+
+      if (domain.length() > 0) {
+        TSAuthentication.initialize(
+          reactContext,
+          clientId,
+          baseUrl,
+          domain
+        );
+      } else {
+        TSAuthentication.initialize(
+          reactContext,
+          clientId,
+          baseUrl,
+          null
+        );
+      }
       promise.resolve(true);
     }
   }
@@ -81,7 +105,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
           }
           @Override
           public void error(TSWebAuthnRegistrationError tsWebAuthnRegistrationError) {
-            promise.reject("result", tsWebAuthnRegistrationError.getEM());
+            promise.reject("result", tsWebAuthnRegistrationError.getErrorMessage());
           }
         }
       );
@@ -132,6 +156,103 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         }
       );
     }
+  }
+
+  // Native Biometrics
+
+  @ReactMethod
+  @NonNull public void registerNativeBiometrics(String username, Promise promise) {
+    if(reactContext.getCurrentActivity() != null) {
+      TSAuthentication.registerNativeBiometrics(
+        reactContext.getCurrentActivity(),
+        username,
+        new TSAuthCallback<TSBiometricsRegistrationResult, TSBiometricsRegistrationError>() {
+          @Override
+          public void success(TSBiometricsRegistrationResult tsBiometricsRegistrationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", tsBiometricsRegistrationResult.keyId());
+            map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
+            map.putString("os", "Android");
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSBiometricsRegistrationError tsBiometricsRegistrationError) {
+            promise.reject("result", tsBiometricsRegistrationError.toString());
+          }
+        }
+      );
+    }
+  }
+
+  @ReactMethod
+  @NonNull public void authenticateNativeBiometrics(String username, String challenge, Promise promise) {
+    if(reactContext.getCurrentActivity() != null) {
+
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
+
+      Map<String, String> biometricsString = getBiometricsStrings();
+      BiometricPromptTexts promptTexts = new BiometricPromptTexts(
+        biometricsString.get("titleTxt"),
+        biometricsString.get("subtitleTxt"),
+        biometricsString.get("cancelTxt")
+      );
+
+      TSAuthentication.authenticateNativeBiometrics(
+        appCompatActivity,
+        username,
+        challenge,
+        promptTexts,
+        new TSAuthCallback<TSBiometricsAuthResult, TSBiometricsAuthError>() {
+          @Override
+          public void success(TSBiometricsAuthResult tsBiometricsAuthResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", tsBiometricsAuthResult.keyId());
+            map.putString("signature", tsBiometricsAuthResult.signature());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSBiometricsAuthError tsBiometricsAuthError) {
+            promise.reject("result", tsBiometricsAuthError.toString());
+          }
+        }
+      );
+    }
+  }
+
+  @Nullable
+  private AppCompatActivity getAppCompatActivity() {
+    Activity activity = reactContext.getCurrentActivity();
+    if (activity instanceof AppCompatActivity) {
+      return (AppCompatActivity) activity;
+    } else {
+      return null;
+    }
+  }
+
+  private Map<String, String> getBiometricsStrings() {
+    Context context = reactContext;
+
+    String titleTxt = getStringResourceByName(context, "BiometricPromptTitle", "Authenticate with Biometrics");
+    String subtitleTxt = getStringResourceByName(context, "BiometricPromptSubtitle", "Use your device biometrics to authenticate.");
+    String cancelTxt = getStringResourceByName(context, "BiometricPromptCancel", "Cancel");
+
+    Map<String, String> biometricsStrings = new HashMap<>();
+    biometricsStrings.put("titleTxt", titleTxt);
+    biometricsStrings.put("subtitleTxt", subtitleTxt);
+    biometricsStrings.put("cancelTxt", cancelTxt);
+
+    return biometricsStrings;
+  }
+
+  private String getStringResourceByName(Context context, String resourceName, String defaultValue) {
+    int resId = context.getResources().getIdentifier(resourceName, "string", context.getPackageName());
+    return resId != 0 ? context.getString(resId) : defaultValue;
   }
 
   @ReactMethod

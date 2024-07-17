@@ -1,3 +1,5 @@
+import type { TSAuthenticationSDK } from "react-native-ts-authentication";
+
 export interface AccessTokenResponse {
     token: string;
     expireDate: Date;
@@ -14,6 +16,8 @@ class MockServer {
         this.clientId = clientId;
         this.secret = secret;
     }
+
+    // WebAuthn
 
     public completeAuthentication = async (accessToken: string, webAuthnEncodedResult: string): Promise<boolean> => {
         const formData = {
@@ -33,7 +37,6 @@ class MockServer {
               }
           );
 
-          console.log(resp)
           return resp.status === 200;
 
       } catch (error) {
@@ -66,6 +69,70 @@ class MockServer {
         return Promise.reject(`Error in completeRegistration: ${error}`);
       }
     }
+
+    // Native Biometrics
+
+    public completeBiometricsRegistration = async (accessToken: string, biometricsRegistrationResults: TSAuthenticationSDK.TSBiometricsRegistrationResult): Promise<boolean> => {
+        const formData = {
+            "publicKeyId": biometricsRegistrationResults.publicKeyId,
+            "publicKey": biometricsRegistrationResults.publicKey,
+            "os": biometricsRegistrationResults.os
+        };
+        
+        try {
+          const resp = await fetch(
+              `${this.baseurl}/cis/v1/auth/mobile-biometrics/register`,
+              {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/x-www-form-urlencoded',
+                      Authorization: `Bearer ${accessToken}`
+                  },
+                  body: new URLSearchParams(formData).toString()
+              }
+          );
+
+          return resp.status === 200;
+
+      } catch (error) {
+        return Promise.reject(`Error in completeBiometricsRegistration: ${error}`);
+      }
+    }
+
+    public completeBiometricsAuthentication = async (
+        accessToken: string,
+        userId: string, 
+        challenge: string, 
+        biometricsAuthenticationResults: TSAuthenticationSDK.TSBiometricsAuthenticationResult
+    ): Promise<boolean> => {
+        const formData = {
+            "key_id": biometricsAuthenticationResults.publicKeyId,
+            "user_id": userId,
+            "signature": biometricsAuthenticationResults.signature,
+            "challenge": challenge
+        };
+        
+        try {
+          const resp = await fetch(
+              `${this.baseurl}/cis/v1/auth/mobile-biometrics/authenticate`,
+              {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/x-www-form-urlencoded',
+                      Authorization: `Bearer ${accessToken}`
+                  },
+                  body: new URLSearchParams(formData).toString()
+              }
+          );
+
+          return resp.status === 200;
+
+      } catch (error) {
+          return Promise.reject(`Error in completeAuthentication: ${error}`);
+      }
+    }
+
+    // Utility
 
     public getAccessToken = async (): Promise<AccessTokenResponse> => {
         const formData = {

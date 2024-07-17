@@ -28,6 +28,17 @@ export namespace TSAuthenticationSDK {
     result: string;
   }
 
+  export interface TSBiometricsRegistrationResult {
+    publicKey: string;
+    publicKeyId: string;
+    os: string;
+  }
+
+  export interface TSBiometricsAuthenticationResult {
+    publicKeyId: string;
+    signature: string;
+  }
+
   export interface DeviceInfo {
     publicKeyId: string;
     publicKey: string;
@@ -48,18 +59,27 @@ export namespace TSAuthenticationSDK {
 }
 
 export interface TSAuthenticationSDKModule {
-  initialize: (clientId: string, domain: string, baseUrl: string) => Promise<boolean>;
+  initializeSDK: () => Promise<boolean>;
+  initialize: (clientId: string, domain?: string | null | undefined, baseUrl?: string | null | undefined) => Promise<boolean>;
   registerWebAuthn: (username: string, displayName: string) => Promise<TSAuthenticationSDK.TSRegistrationResult>;
   authenticateWebAuthn: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
   signWebauthnTransaction: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
+  registerNativeBiometrics: (username: string) => Promise<TSAuthenticationSDK.TSBiometricsRegistrationResult>;
+  authenticateNativeBiometrics: (username: string, challenge: string) => Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult>;
   getDeviceInfo: () => Promise<TSAuthenticationSDK.DeviceInfo>;
   isWebAuthnSupported: () => Promise<boolean>;
 }
 
 class AuthenticationSDK implements TSAuthenticationSDKModule {
 
-  initialize(clientId: string, domain: string, baseUrl: string): Promise<boolean> {
-    return TsAuthentication.initialize(clientId, domain, baseUrl);
+  initializeSDK(): Promise<boolean> {
+    return TsAuthentication.initializeSDK();
+  }
+
+  initialize(clientId: string, domain?: string | null | undefined, baseUrl?: string | null | undefined): Promise<boolean> {
+    const isDomain = domain ? domain : "";
+    const isBaseUrl = baseUrl ? baseUrl : "https://api.transmitsecurity.io/";
+    return TsAuthentication.initialize(clientId, isDomain, isBaseUrl);
   }
 
   registerWebAuthn(username: string, displayName: string): Promise<TSAuthenticationSDK.TSRegistrationResult> {
@@ -72,6 +92,14 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
 
   signWebauthnTransaction(username: string): Promise<TSAuthenticationSDK.TSAuthenticationResult> {
     return TsAuthentication.signWebauthnTransaction(username);
+  }
+
+  registerNativeBiometrics(username: string): Promise<TSAuthenticationSDK.TSBiometricsRegistrationResult> {
+    return TsAuthentication.registerNativeBiometrics(username);
+  }
+
+  authenticateNativeBiometrics(username: string, challenge: string): Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult> {
+    return TsAuthentication.authenticateNativeBiometrics(username, challenge);
   }
 
   getDeviceInfo(): Promise<TSAuthenticationSDK.DeviceInfo> {

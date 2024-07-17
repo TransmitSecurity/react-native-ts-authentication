@@ -10,6 +10,7 @@ import { View, StyleSheet, Text, Button, TextInput } from 'react-native';
 
 export type Props = {
     onStartAuthentication: (username: string) => void;
+    onStartNativeBiometrics: (username: string) => void;
     errorMessage: string;
 };
 
@@ -33,6 +34,7 @@ export default class HomeScreen extends React.Component<Props, State> {
                 <Text style={styles.sectionTitle}>{"Authentication SDK"}</Text>
                 {this.renderUsernameInputField()}
                 {this.renderStartAuthenticationButton()}
+                {this.renderNativeBiometricsButton()}
                 {this.renderStatusLabel()}
             </View>
         );
@@ -69,7 +71,18 @@ export default class HomeScreen extends React.Component<Props, State> {
                 />
             </View>
         )
-    }    
+    }
+
+    private renderNativeBiometricsButton(): ReactElement {
+        return (
+            <View style={{ marginTop: 24 }}>
+                <Button
+                    title="Native Biometrics"
+                    onPress={() => this.props.onStartNativeBiometrics(this.state.username)}
+                />
+            </View>
+        )
+    }
 }
 
 const styles = StyleSheet.create({

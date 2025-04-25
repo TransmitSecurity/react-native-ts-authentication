@@ -51,6 +51,8 @@ export default class App extends React.Component<any, State> {
             <HomeScreen 
               onStartAuthentication={this.onStartAuthentication}
               onStartNativeBiometrics={this.onStartNativeBiometrics}
+              onApprovalWebAuthn={this.onApprovalWebAuthn}
+              onApprovalWebAuthnWithData={this.onApprovalWebAuthnWithData}
               errorMessage={this.state.errorMessage}
             />
           ) : (
@@ -196,6 +198,44 @@ export default class App extends React.Component<any, State> {
     }
   }
 
+  // Approvals WebAuthn
+
+  public onApprovalWebAuthn = async (username: string, approvalData: { [key: string]: string; }) => {
+    if (username === '') {
+      this.setState({ errorMessage: 'Please enter a username' });
+      return;
+    }
+    this.approvalWebAuthn(username, approvalData);
+  }
+
+  private approvalWebAuthn = async(username: string, approvalData: { [key: string]: string; }): Promise<void> => {
+    try {
+      const result = await TSAuthenticationSDKModule.approvalWebAuthn(username, approvalData, []);
+      console.log("Approval result: ", result);
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+
+  // Approvals WebAuthn with Authentication Data
+
+  public onApprovalWebAuthnWithData = async (rawAuthenticationData: { [key: string]: any; }) => {    
+    if (rawAuthenticationData === null) {
+      this.setState({ errorMessage: 'Please enter authentication data' });
+      return;
+    }
+    this.approvalWebAuthnWithData(rawAuthenticationData);
+  }
+
+  private approvalWebAuthnWithData = async (rawAuthenticationData: { [key: string]: any; }): Promise<void> => {
+    try {
+      const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
+      console.log("Approval result: ", result);
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+
   // Navigation
 
   private navigateToAuthenticatedUserScreen = (username: string, isNewRegistration: boolean): void => {
@@ -222,7 +262,7 @@ export default class App extends React.Component<any, State> {
 
       this.configureExampleApp(appConfiguration);
     } else {
-      console.log(`Please configure the app by updating the 'config.ts' file`);
+      console.error(`Please configure the app by updating the 'config.ts' file`);
     }
   }
 

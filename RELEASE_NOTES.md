@@ -1,4 +1,4 @@
-## 0.1.4 July 2024
+## 0.1.5 July 2024
 ### Content
 #### Enhancements
 1. Upgraded native SDKs to iOS `1.1.3` and Android `1.0.19`.

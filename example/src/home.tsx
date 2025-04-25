@@ -6,11 +6,14 @@
  */
 
 import React, { type ReactElement } from 'react';
-import { View, StyleSheet, Text, Button, TextInput } from 'react-native';
+import { View, StyleSheet, Text, Button, TextInput, Alert } from 'react-native';
+import { TSAuthenticationSDK } from '../../lib/typescript/src';
 
 export type Props = {
     onStartAuthentication: (username: string) => void;
     onStartNativeBiometrics: (username: string) => void;
+    onApprovalWebAuthn: (username: string, approvalData: { [key: string]: string; }) => void;
+    onApprovalWebAuthnWithData: (rawAuthenticationData: { [key: string]: any; } ) => void;
     errorMessage: string;
 };
 
@@ -35,6 +38,8 @@ export default class HomeScreen extends React.Component<Props, State> {
                 {this.renderUsernameInputField()}
                 {this.renderStartAuthenticationButton()}
                 {this.renderNativeBiometricsButton()}
+                {this.renderApprovalWebAuthnButton()}
+                {this.renderApprovalWebAuthnWithDataButton()}
                 {this.renderStatusLabel()}
             </View>
         );
@@ -42,7 +47,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderUsernameInputField(): ReactElement {
         return (
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 12 }}>
                 <TextInput
                     style={styles.input}
                     onChangeText={(text) => this.setState({ username: text })}
@@ -56,7 +61,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderStatusLabel(): ReactElement {
         return (
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 2 }}>
                 <Text style={styles.statusLabel}>{this.props.errorMessage}</Text>
             </View>
         )
@@ -64,7 +69,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderStartAuthenticationButton(): ReactElement {
         return (
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 2 }}>
                 <Button
                     title="Start Authentication"
                     onPress={() => this.props.onStartAuthentication(this.state.username)}
@@ -75,13 +80,63 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderNativeBiometricsButton(): ReactElement {
         return (
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 2 }}>
                 <Button
                     title="Native Biometrics"
                     onPress={() => this.props.onStartNativeBiometrics(this.state.username)}
                 />
             </View>
         )
+    }
+
+    private renderApprovalWebAuthnButton(): ReactElement {
+        return (
+            <View style={{ marginTop: 2 }}>
+                <Button
+                    title="Approval WebAuthn"
+                    onPress={() => this.props.onApprovalWebAuthn(this.state.username, { "somekey": "some value" })}
+                />
+            </View>
+        )
+    }
+
+    private renderApprovalWebAuthnWithDataButton(): ReactElement {
+        return (
+            <View style={{ marginTop: 12 }}>
+                <Button
+                    title="Approval WebAuthn With Data"
+                    onPress={() => { this.handlePressApprovalWebAuthndata() }}
+                />
+            </View>
+        )
+    }
+
+    private handlePressApprovalWebAuthndata = () => {
+        if (!this.state.username || this.state.username === '') {
+            Alert.alert("Error", "Please enter a username");
+            return 
+        }
+
+        const userData = {
+            id: this.state.username,
+            name: this.state.username,
+            displayName: this.state.username
+        };
+
+        const optionsData = {
+            challenge: "some challenge string",
+            allowCredentials: null,
+            userVerification: null,
+            rpId: "the relying party id",
+            userData
+        };
+
+        const approvalData = {
+            webauthnSessionId: "some webauthn session id",
+            credentialRequestOptions: optionsData
+        }
+
+        this.props.onApprovalWebAuthnWithData(approvalData)
     }
 }
 

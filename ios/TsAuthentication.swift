@@ -2,214 +2,304 @@ import TSAuthenticationSDK
 
 @objc(TsAuthentication)
 class TsAuthentication: NSObject {
-    
-    private let kTag = "TSAuthentication"
-    
-    // MARK: - SDK Init
-    
-    @objc(initializeSDK:withRejecter:)
-    func initializeSDK(
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-            runBlockOnMain {
-                do {
-                    try TSAuthentication.shared.initializeSDK()
-                    resolve(true)
-                } catch {
-                    logger.log("Finished initializeSDK with error: \(error)")
-                    reject(self.kTag, nil, error)
-                }
-            }
-    }
-    
-    @objc(initialize:domain:baseUrl:withResolver:withRejecter:)
-    func initialize(
-        _ clientId: String,
-        domain: String,
-        baseUrl: String,
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-        
-        guard !clientId.isEmpty, !baseUrl.isEmpty else {
-            reject("Invalid params provided to .initialize", nil, nil)
-            return
+  
+  private let kTag = "TSAuthentication"
+  
+  // MARK: - SDK Init
+  
+  @objc(initializeSDK:withRejecter:)
+  func initializeSDK(
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      runBlockOnMain {
+        do {
+          try TSAuthentication.shared.initializeSDK()
+          resolve(true)
+        } catch {
+          logger.log("Finished initializeSDK with error: \(error)")
+          reject(self.kTag, nil, error)
         }
-        
-        runBlockOnMain {
-            if domain.count > 0 {
-                TSAuthentication.shared.initialize(
-                    baseUrl: baseUrl,
-                    clientId: clientId,
-                    domain: domain
-                )
-            } else {
-                TSAuthentication.shared.initialize(
-                    baseUrl: baseUrl,
-                    clientId: clientId
-                )
-            }
-            resolve(true)
+      }
+    }
+  
+  @objc(initialize:domain:baseUrl:withResolver:withRejecter:)
+  func initialize(
+    _ clientId: String,
+    domain: String,
+    baseUrl: String,
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      guard !clientId.isEmpty, !baseUrl.isEmpty else {
+        reject("Invalid params provided to .initialize", nil, nil)
+        return
+      }
+      
+      runBlockOnMain {
+        if domain.count > 0 {
+          TSAuthentication.shared.initialize(
+            baseUrl: baseUrl,
+            clientId: clientId,
+            domain: domain
+          )
+        } else {
+          TSAuthentication.shared.initialize(
+            baseUrl: baseUrl,
+            clientId: clientId
+          )
         }
+        resolve(true)
+      }
     }
-    
-    // MARK: - WebAuthn
-    
-    @objc(registerWebAuthn:displayName:withResolver:withRejecter:)
-    func registerWebAuthn(
-        _ username: String,
-        displayName: String,
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-        
-            runBlockOnMain { [weak self] in
-                TSAuthentication.shared.registerWebAuthn(
-                    username: username,
-                    displayName: displayName) { [weak self] results in
-                        guard let self = self else { return }
-                        switch results {
-                        case .success(let response):
-                            logger.log("Finished native registration with success")
-                            resolve(["result": response.result])
-                        case .failure(let error):
-                            logger.log("Finished native registration with error: \(error)")
-                            reject(self.kTag, nil, error)
-                        }
-                    }
+  
+  // MARK: - WebAuthn
+  
+  @objc(registerWebAuthn:displayName:withResolver:withRejecter:)
+  func registerWebAuthn(
+    _ username: String,
+    displayName: String,
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain { [weak self] in
+        TSAuthentication.shared.registerWebAuthn(
+          username: username,
+          displayName: displayName) { [weak self] results in
+            guard let self = self else { return }
+            switch results {
+            case .success(let response):
+              logger.log("Finished native registration with success")
+              resolve(["result": response.result])
+            case .failure(let error):
+              logger.log("Finished native registration with error: \(error)")
+              reject(self.kTag, nil, error)
             }
+          }
+      }
     }
-    
-    @objc(authenticateWebAuthn:withResolver:withRejecter:)
-    func authenticateWebAuthn(
-        _ username: String,
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-            
-            runBlockOnMain {
-                TSAuthentication.shared.authenticateWebAuthn(username: username) { [weak self] results in
-                    guard let self = self else { return }
-                    
-                    switch results {
-                        case .success(let response):
-                            resolve(["result": response.result])
-                        case .failure(let error):
-                            reject(self.kTag, error.localizedDescription, error)
-                        }
-                    }
-            }
-    }
-    
-    // MARK: - Sign Transaction
-    
-    @objc(signWebauthnTransaction:withResolver:withRejecter:)
-    func signWebauthnTransaction(
-        _ username: String,
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-            
-            runBlockOnMain {
-                TSAuthentication.shared.signWebauthnTransaction(username: username) { [weak self] results in
-                    guard let self = self else { return }
-                    
-                    switch results {
-                        case .success(let response):
-                            resolve(["result": response.result])
-                        case .failure(let error):
-                            reject(self.kTag, error.localizedDescription, error)
-                        }
-                    }
-            }
-    }
-    
-    // MARK: - Native Biometrics
-    
-    @objc(registerNativeBiometrics:withResolver:withRejecter:)
-    func registerNativeBiometrics(
-        _ username: String,
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-            
-            runBlockOnMain { [weak self] in
-                TSAuthentication.shared.registerNativeBiometrics(username: username) { [weak self] results in
-                    guard let self = self else { return }
-                    
-                    switch results {
-                    case .success(let response):
-                        let publicKey = response.publicKey
-                        let publicKeyId = response.publicKeyId
-                        resolve([
-                            "publicKey": publicKey,
-                            "publicKeyId": publicKeyId,
-                            "os": "iOS"
-                        ])
-                    case .failure(let error):
-                        reject(self.kTag, error.localizedDescription, error)
-                    }
-                }
-            }
+  
+  @objc(authenticateWebAuthn:withResolver:withRejecter:)
+  func authenticateWebAuthn(
+    _ username: String,
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain {
+        TSAuthentication.shared.authenticateWebAuthn(username: username) { [weak self] results in
+          guard let self = self else { return }
+          
+          switch results {
+          case .success(let response):
+            resolve(["result": response.result])
+          case .failure(let error):
+            reject(self.kTag, error.localizedDescription, error)
+          }
         }
-    
-    @objc(authenticateNativeBiometrics:challenge:withResolver:withRejecter:)
-    func authenticateNativeBiometrics(
-        _ username: String,
-        challenge: String,
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-            
-            runBlockOnMain {
-                TSAuthentication.shared.authenticateNativeBiometrics(
-                    username: username, challenge: challenge
-                ) { [weak self] result in
-                    guard let self = self else { return }
-                    
-                    switch result {
-                    case .success(let response):
-                        let publicKeyId = response.publicKeyId
-                        let signature = response.signature
-                        resolve([
-                            "publicKeyId": publicKeyId,
-                            "signature": signature
-                        ])
-                    case .failure(let error):
-                        if case .nativeBiometricsError(let nativeBiometricsError) = error {
-                            reject(self.kTag, error.localizedDescription, error)
-                        }
-                    }
-                }
-            }
+      }
     }
- 
-    // MARK: - Utility
-    
-    @objc(getDeviceInfo:withRejecter:)
-    func getDeviceInfo(
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-            
-            runBlockOnMain {
-                TSAuthentication.shared.getDeviceInfo() { [weak self] deviceInfo in
-                    guard let self = self else { return }
-                    
-                    switch deviceInfo {
-                        case .success(let response):
-                            let info = [
-                                "publicKeyId": response.publicKeyId,
-                                "publicKey": response.publicKey
-                            ]
-                            resolve(info)
-                        case .failure(let error):
-                            reject(self.kTag, error.localizedDescription, error)
-                        }
-                    }
+  
+  // MARK: - Sign Transaction
+  
+  @objc(signWebauthnTransaction:withResolver:withRejecter:)
+  func signWebauthnTransaction(
+    _ username: String,
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain {
+        TSAuthentication.shared.signWebauthnTransaction(username: username) { [weak self] results in
+          guard let self = self else { return }
+          
+          switch results {
+          case .success(let response):
+            resolve(["result": response.result])
+          case .failure(let error):
+            reject(self.kTag, error.localizedDescription, error)
+          }
+        }
+      }
+    }
+  
+  // MARK: - Native Biometrics
+  
+  @objc(registerNativeBiometrics:withResolver:withRejecter:)
+  func registerNativeBiometrics(
+    _ username: String,
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain { [weak self] in
+        TSAuthentication.shared.registerNativeBiometrics(username: username) { [weak self] results in
+          guard let self = self else { return }
+          
+          switch results {
+          case .success(let response):
+            let publicKey = response.publicKey
+            let publicKeyId = response.publicKeyId
+            resolve([
+              "publicKey": publicKey,
+              "publicKeyId": publicKeyId,
+              "os": "iOS"
+            ])
+          case .failure(let error):
+            reject(self.kTag, error.localizedDescription, error)
+          }
+        }
+      }
+    }
+  
+  @objc(authenticateNativeBiometrics:challenge:withResolver:withRejecter:)
+  func authenticateNativeBiometrics(
+    _ username: String,
+    challenge: String,
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain {
+        TSAuthentication.shared.authenticateNativeBiometrics(
+          username: username, challenge: challenge
+        ) { [weak self] result in
+          guard let self = self else { return }
+          
+          switch result {
+          case .success(let response):
+            let publicKeyId = response.publicKeyId
+            let signature = response.signature
+            resolve([
+              "publicKeyId": publicKeyId,
+              "signature": signature
+            ])
+          case .failure(let error):
+            if case .nativeBiometricsError(let nativeBiometricsError) = error {
+              reject(self.kTag, error.localizedDescription, nativeBiometricsError)
             }
+          }
+        }
+      }
+    }
+  
+  // MARK: - Approvals
+  
+  @objc(approvalWebAuthn:approvalData:options:withResolver:withRejecter:)
+  func approvalWebAuthn(
+    username: String?,
+    approvalData: [String: String],
+    options: [String],
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    
+      runBlockOnMain {
+        TSAuthentication.shared.approvalWebAuthn(approvalData: approvalData, username: username, options: self.convertWebAuthnOptions(options)) { [weak self] results in
+          guard let self = self else { return }
+          
+          switch results {
+          case .success(let result):
+            resolve([
+              "result": result.result
+            ])
+          case .failure(let error):
+            reject(self.kTag, error.localizedDescription, error)
+          }
+        }
+      }
+  }
+  
+  @objc(approvalWebAuthnWithData:options:withResolver:withRejecter:)
+  func approvalWebAuthnWithData(
+    rawAuthenticationData: [String: AnyHashable],
+    options: [String],
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let authenticationData = convertWebAuthnAuthenticationData(rawAuthenticationData) else {
+      reject(kTag, "Invalid rawAuthenticationData", nil)
+      return
     }
     
-    @objc(isWebAuthnSupported:withRejecter:)
-    func isWebAuthnSupported(
-        resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+    runBlockOnMain {
+      TSAuthentication.shared.approvalWebAuthn(authenticationData, options: self.convertWebAuthnOptions(options)) { [weak self] results in
+        guard let self = self else { return }
 
-            runBlockOnMain {
-                let isSupported = TSAuthentication.isWebAuthnSupported()
-                resolve(isSupported)
-            }
+        switch results {
+        case .success(let results):
+          resolve([
+            "result": results.result
+          ])
+        case .failure(let error):
+          reject(self.kTag, error.localizedDescription, error)
+        }
+      }
     }
     
-    // MARK: - Threading
-        
-    private func runBlockOnMain(_ block: @escaping () -> Void) {
-        DispatchQueue.main.async {
-            block()
-        }
+    
+    //    final public func approvalWebAuthn(_ webAuthnAuthenticationData: TSAuthenticationSDK.TSWebAuthnAuthenticationData, options: TSAuthenticationSDK.TSAuthentication.WebAuthnAuthenticationOptions = [], completion: TSAuthenticationSDK.TSApprovalCompletion? = nil)
+  }
+  
+  //    final public func approvalNativeBiometrics(username: String, challenge: String, completion: @escaping TSAuthenticationSDK.TSNativeBiometricsApprovalCompletion)
+  
+  private func convertWebAuthnAuthenticationData(_ rawData: [String: AnyHashable]) -> TSAuthenticationSDK.TSWebAuthnAuthenticationData? {
+    
+    let userData = TSAuthenticationSDK.TSWebAuthnUserData(id: nil, name: nil, displayName: nil)
+    
+    let optionsData = TSWebAuthnAuthenticationCredentialRequestOptionsData(
+      challenge: "",
+      allowCredentials: nil,
+      userVerification: nil,
+      rpId: nil,
+      user: userData
+    )
+    
+    let authenticationData = TSAuthenticationSDK.TSWebAuthnAuthenticationData(
+      webauthnSessionId: "",
+      credentialRequestOptions: optionsData
+    )
+    
+    return authenticationData
+  }
+  
+  private func convertWebAuthnOptions(_ rawOptions: [String]) -> TSAuthenticationSDK.TSAuthentication.WebAuthnAuthenticationOptions {
+    var options: TSAuthenticationSDK.TSAuthentication.WebAuthnAuthenticationOptions = []
+    
+    if rawOptions.firstIndex(of: "preferLocalCredantials") != nil {
+      options.insert(.preferLocalCredantials)
     }
+    
+    return options
+  }
+  
+  // MARK: - Utility
+  
+  @objc(getDeviceInfo:withRejecter:)
+  func getDeviceInfo(
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain {
+        TSAuthentication.shared.getDeviceInfo() { [weak self] deviceInfo in
+          guard let self = self else { return }
+          
+          switch deviceInfo {
+          case .success(let response):
+            let info = [
+              "publicKeyId": response.publicKeyId,
+              "publicKey": response.publicKey
+            ]
+            resolve(info)
+          case .failure(let error):
+            reject(self.kTag, error.localizedDescription, error)
+          }
+        }
+      }
+    }
+  
+  @objc(isWebAuthnSupported:withRejecter:)
+  func isWebAuthnSupported(
+    resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+      
+      runBlockOnMain {
+        let isSupported = TSAuthentication.isWebAuthnSupported()
+        resolve(isSupported)
+      }
+    }
+  
+  // MARK: - Threading
+  
+  private func runBlockOnMain(_ block: @escaping () -> Void) {
+    DispatchQueue.main.async {
+      block()
+    }
+  }
 }

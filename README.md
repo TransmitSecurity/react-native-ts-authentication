@@ -201,6 +201,32 @@ private randomString = (): string => {
 }
 ```
 
+### Approval with WebAuthn
+```js
+onApprovalWebAuthn = async (username: string, approvalData: { [key: string]: string }): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.approvalWebAuthn(username, approvalData, []);
+        console.log("Approval result: ", result);
+        // Use the result to complete WebAuthn approval in your backend.
+    } catch (error: any) {
+        this.setState({ errorMessage: `${error}` });
+    }
+}
+```
+
+### Approval with WebAuthn with Authentication Data
+```js
+onApprovalWebAuthnWithData = async (rawAuthenticationData: TSWebAuthnAuthenticationData): Promise<void> => {
+   try {
+        const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
+        console.log("Approval result: ", result);
+        // Use the result to complete WebAuthn approval in your backend.
+    } catch (error: any) {
+        this.setState({ errorMessage: `${error}` });
+    }
+}
+```
+
 ### Information about the device
 
 #### Get Device Info

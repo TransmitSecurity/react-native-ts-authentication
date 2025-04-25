@@ -56,6 +56,33 @@ export namespace TSAuthenticationSDK {
     passkeyError,
     unknown
   }
+
+  export interface ApprovalResults {
+    result: string;
+  }
+
+  export const enum WebAuthnAuthenticationOptions {
+    preferLocalCredantials = "preferLocalCredantials"
+  }
+
+  export interface TSWebAuthnUserData {
+    id: string | null;
+    name: string | null;
+    displayName: string | null;
+  }
+
+  export interface TSWebAuthnAuthenticationCredentialRequestOptionsData {
+    challenge: string;
+    allowCredentials: string[] | null;
+    userVerification: string | null;
+    rpId: string | null;
+    user: TSWebAuthnUserData;
+  }
+  
+  export interface TSWebAuthnAuthenticationData {
+    webauthnSessionId: string;
+    credentialRequestOptions: TSWebAuthnAuthenticationCredentialRequestOptionsData;
+  }
 }
 
 export interface TSAuthenticationSDKModule {
@@ -66,6 +93,19 @@ export interface TSAuthenticationSDKModule {
   signWebauthnTransaction: (username: string) => Promise<TSAuthenticationSDK.TSAuthenticationResult>;
   registerNativeBiometrics: (username: string) => Promise<TSAuthenticationSDK.TSBiometricsRegistrationResult>;
   authenticateNativeBiometrics: (username: string, challenge: string) => Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult>;
+  approvalWebAuthn: (
+    username: string | null,
+    approvalData: { [key: string]: string },
+    options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]
+  ) => Promise<TSAuthenticationSDK.ApprovalResults>;
+  
+  approvalWebAuthnWithData: (
+    rawAuthenticationData: { [key: string]: any }, 
+    options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]
+  ) => Promise<TSAuthenticationSDK.ApprovalResults>;
+  
+
+
   getDeviceInfo: () => Promise<TSAuthenticationSDK.DeviceInfo>;
   isWebAuthnSupported: () => Promise<boolean>;
 }
@@ -100,6 +140,19 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
 
   authenticateNativeBiometrics(username: string, challenge: string): Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult> {
     return TsAuthentication.authenticateNativeBiometrics(username, challenge);
+  }
+
+  approvalWebAuthn(
+    username: string | null,
+    approvalData: { [key: string]: string },
+    options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]): Promise<TSAuthenticationSDK.ApprovalResults> {
+      return TsAuthentication.approvalWebAuthn(username, approvalData, options);
+  }
+
+  approvalWebAuthnWithData(
+    rawAuthenticationData: { [key: string]: any }, 
+    options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]): Promise<TSAuthenticationSDK.ApprovalResults> {
+      return TsAuthentication.approvalWebAuthnWithData(rawAuthenticationData, options);
   }
 
   getDeviceInfo(): Promise<TSAuthenticationSDK.DeviceInfo> {

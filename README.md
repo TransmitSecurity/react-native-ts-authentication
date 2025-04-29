@@ -207,7 +207,6 @@ onApprovalWebAuthn = async (username: string, approvalData: { [key: string]: str
     try {
         const result = await TSAuthenticationSDKModule.approvalWebAuthn(username, approvalData, []);
         console.log("Approval result: ", result);
-        // Use the result to complete WebAuthn approval in your backend.
     } catch (error: any) {
         this.setState({ errorMessage: `${error}` });
     }
@@ -220,11 +219,23 @@ onApprovalWebAuthnWithData = async (rawAuthenticationData: TSWebAuthnAuthenticat
    try {
         const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
         console.log("Approval result: ", result);
-        // Use the result to complete WebAuthn approval in your backend.
     } catch (error: any) {
         this.setState({ errorMessage: `${error}` });
     }
 }
+```
+
+### Approval with WebAuthn with Native Biometrics
+
+```js
+onApprovalNativeBiometrics = async (username: string) => {
+    try {
+      const result = await TSAuthenticationSDKModule.approvalNativeBiometrics(username, challenge);
+      console.log("Approval result: ", result);
+    }  catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
 ```
 
 ### Information about the device

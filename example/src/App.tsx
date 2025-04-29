@@ -53,6 +53,7 @@ export default class App extends React.Component<any, State> {
               onStartNativeBiometrics={this.onStartNativeBiometrics}
               onApprovalWebAuthn={this.onApprovalWebAuthn}
               onApprovalWebAuthnWithData={this.onApprovalWebAuthnWithData}
+              onApprovalNativeBiometrics={this.onApprovalNativeBiometrics}
               errorMessage={this.state.errorMessage}
             />
           ) : (
@@ -232,6 +233,22 @@ export default class App extends React.Component<any, State> {
       const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
       console.log("Approval result: ", result);
     } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+
+  // Approvals Native Biometrics
+
+  public onApprovalNativeBiometrics = async (username: string) => {
+    if (username === '') {
+      this.setState({ errorMessage: 'Please enter a username' });
+      return;
+    }
+    
+    try {
+      const result = await TSAuthenticationSDKModule.approvalNativeBiometrics(username, "challenge");
+      console.log("Approval result: ", result);
+    }  catch (error: any) {
       this.setState({ errorMessage: `${error}` });
     }
   }

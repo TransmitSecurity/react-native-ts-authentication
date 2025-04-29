@@ -224,9 +224,30 @@ class TsAuthentication: NSObject {
         }
       }
     }
-    
-    
-    //    final public func approvalWebAuthn(_ webAuthnAuthenticationData: TSAuthenticationSDK.TSWebAuthnAuthenticationData, options: TSAuthenticationSDK.TSAuthentication.WebAuthnAuthenticationOptions = [], completion: TSAuthenticationSDK.TSApprovalCompletion? = nil)
+  }
+  
+  @objc(approvalNativeBiometrics:challenge:withResolver:withRejecter:)
+  func approvalNativeBiometrics(
+    username: String,
+    challenge: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    runBlockOnMain {
+      TSAuthentication.shared.approvalNativeBiometrics(username: username, challenge: challenge)  { [weak self] results in
+        guard let self = self else { return }
+
+        switch results {
+        case .success(let results):
+          resolve([
+            "publicKeyId": results.publicKeyId,
+            "signature": results.signature
+          ])
+        case .failure(let error):
+          reject(self.kTag, error.localizedDescription, error)
+        }
+      }
+    }
   }
   
   //    final public func approvalNativeBiometrics(username: String, challenge: String, completion: @escaping TSAuthenticationSDK.TSNativeBiometricsApprovalCompletion)

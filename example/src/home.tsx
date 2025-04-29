@@ -7,13 +7,13 @@
 
 import React, { type ReactElement } from 'react';
 import { View, StyleSheet, Text, Button, TextInput, Alert } from 'react-native';
-import { TSAuthenticationSDK } from '../../lib/typescript/src';
 
 export type Props = {
     onStartAuthentication: (username: string) => void;
     onStartNativeBiometrics: (username: string) => void;
     onApprovalWebAuthn: (username: string, approvalData: { [key: string]: string; }) => void;
     onApprovalWebAuthnWithData: (rawAuthenticationData: { [key: string]: any; } ) => void;
+    onApprovalNativeBiometrics: (username: string) => void;
     errorMessage: string;
 };
 
@@ -40,6 +40,7 @@ export default class HomeScreen extends React.Component<Props, State> {
                 {this.renderNativeBiometricsButton()}
                 {this.renderApprovalWebAuthnButton()}
                 {this.renderApprovalWebAuthnWithDataButton()}
+                {this.renderApprovalNativeBiometricsButton()}
                 {this.renderStatusLabel()}
             </View>
         );
@@ -111,6 +112,17 @@ export default class HomeScreen extends React.Component<Props, State> {
         )
     }
 
+   private renderApprovalNativeBiometricsButton(): ReactElement {
+        return (
+            <View style={{ marginTop: 12 }}>
+                <Button
+                    title="Approval with Native Biometrics"
+                    onPress={() => { this.handlePressApprovalNativeBiometrics() }}
+                />
+            </View>
+        )
+    }
+
     private handlePressApprovalWebAuthndata = () => {
         if (!this.state.username || this.state.username === '') {
             Alert.alert("Error", "Please enter a username");
@@ -137,6 +149,15 @@ export default class HomeScreen extends React.Component<Props, State> {
         }
 
         this.props.onApprovalWebAuthnWithData(approvalData)
+    }
+
+    private handlePressApprovalNativeBiometrics = () => {
+        if (!this.state.username || this.state.username === '') {
+            Alert.alert("Error", "Please enter a username");
+            return 
+        }
+
+        this.props.onApprovalNativeBiometrics(this.state.username)
     }
 }
 

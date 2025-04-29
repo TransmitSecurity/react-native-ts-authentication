@@ -61,6 +61,8 @@ export namespace TSAuthenticationSDK {
     result: string;
   }
 
+
+
   export const enum WebAuthnAuthenticationOptions {
     preferLocalCredantials = "preferLocalCredantials"
   }
@@ -104,7 +106,10 @@ export interface TSAuthenticationSDKModule {
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]
   ) => Promise<TSAuthenticationSDK.ApprovalResults>;
   
-
+  approvalNativeBiometrics: (
+    username: string,
+    challenge: string
+  ) => Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult>;
 
   getDeviceInfo: () => Promise<TSAuthenticationSDK.DeviceInfo>;
   isWebAuthnSupported: () => Promise<boolean>;
@@ -153,6 +158,13 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
     rawAuthenticationData: { [key: string]: any }, 
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]): Promise<TSAuthenticationSDK.ApprovalResults> {
       return TsAuthentication.approvalWebAuthnWithData(rawAuthenticationData, options);
+  }
+
+  approvalNativeBiometrics(
+    username: string,
+    challenge: string
+  ): Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult> {
+    return TsAuthentication.approvalNativeBiometrics(username, challenge);
   }
 
   getDeviceInfo(): Promise<TSAuthenticationSDK.DeviceInfo> {

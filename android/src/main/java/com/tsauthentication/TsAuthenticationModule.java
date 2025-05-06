@@ -238,6 +238,29 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     }
   }
 
+  // region Approvals
+
+  func approvalWebAuthn(
+    username: String?,
+    approvalData: [String: String],
+    options: [String],
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  )
+
+
+  @ReactMethod
+  @NonNull
+  public void approvalWebAuthn(String username, ReadableMap approvalData, ReadableArray options, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+
+
+
+    }
+  }
+
+  // region Helpers
+
   @Nullable
   private AppCompatActivity getAppCompatActivity() {
     Activity activity = reactContext.getCurrentActivity();

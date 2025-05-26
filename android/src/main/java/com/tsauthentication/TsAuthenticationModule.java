@@ -11,10 +11,14 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.transmit.authentication.TSDeviceInfoError;
+import com.transmit.authentication.TSWebAuthnApprovalError;
+import com.transmit.authentication.TSWebAuthnApprovalResult;
 import com.transmit.authentication.TSWebAuthnAuthenticationError;
 import com.transmit.authentication.AuthenticationResult;
 import com.transmit.authentication.RegistrationResult;
@@ -26,8 +30,13 @@ import com.transmit.authentication.biometrics.TSBiometricsAuthError;
 import com.transmit.authentication.biometrics.TSBiometricsAuthResult;
 import com.transmit.authentication.biometrics.TSBiometricsRegistrationError;
 import com.transmit.authentication.biometrics.TSBiometricsRegistrationResult;
+import com.transmit.authentication.biometrics.TSNativeBiometricsApprovalError;
+import com.transmit.authentication.biometrics.TSNativeBiometricsApprovalResult;
 import com.transmit.authentication.exceptions.TSAuthenticationInitializeException;
-import com.transmit.authentication.network.completereg.DeviceInfo;
+import com.transmit.authentication.DeviceInfo;
+import com.transmit.authentication.network.startauth.TSAllowCredentials;
+import com.transmit.authentication.network.startauth.TSCredentialRequestOptions;
+import com.transmit.authentication.network.startauth.TSWebAuthnAuthenticationData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,15 +75,13 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       if (domain.length() > 0) {
         TSAuthentication.initialize(
             reactContext,
-            clientId,
-            baseUrl,
-            domain);
+            clientId
+        );
       } else {
         TSAuthentication.initialize(
             reactContext,
-            clientId,
-            baseUrl,
-            null);
+            clientId
+        );
       }
       promise.resolve(true);
     }
@@ -243,7 +250,28 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @NonNull
   public void approvalWebAuthn(String username, ReadableMap approvalData, ReadableArray options, Promise promise) {
     if (reactContext.getCurrentActivity() != null) {
+      Map<String, String> approvalDataMap = new HashMap<>();
+      for (Map.Entry<String, Object> entry : approvalData.toHashMap().entrySet()) {
+        approvalDataMap.put(entry.getKey(), entry.getValue().toString());
+      }
 
+      TSAuthentication.approvalWebAuthn(
+          reactContext.getCurrentActivity(),
+          username,
+          approvalDataMap,
+          new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
+            @Override
+            public void success(TSWebAuthnApprovalResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("result", result.result());
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSWebAuthnApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
     }
   }
 
@@ -253,7 +281,27 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       ReadableMap rawAuthenticationData,
       ReadableArray options,
       Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+      Map<String, Object> authDataMap = rawAuthenticationData.toHashMap();
+      TSWebAuthnAuthenticationData authData = this.convertWebAuthnAuthenticationData(authDataMap);
 
+      TSAuthentication.approvalWebAuthn(
+          reactContext.getCurrentActivity(),
+          authData,
+          new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
+            @Override
+            public void success(TSWebAuthnApprovalResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("result", result.result()); // Adjust field access as needed
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSWebAuthnApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+    }
   }
 
   @ReactMethod
@@ -262,10 +310,63 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       String username,
       String challenge,
       Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
 
+      Map<String, String> biometricsString = getBiometricsStrings();
+      BiometricPromptTexts promptTexts = new BiometricPromptTexts(
+          biometricsString.get("titleTxt"),
+          biometricsString.get("subtitleTxt"),
+          biometricsString.get("cancelTxt"));
+
+      TSAuthentication.approvalNativeBiometrics(
+          appCompatActivity,
+          username,
+          challenge,
+          promptTexts,
+          new TSAuthCallback<TSNativeBiometricsApprovalResult, TSNativeBiometricsApprovalError>() {
+            @Override
+            public void success(TSNativeBiometricsApprovalResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("publicKeyId", result.keyId()); // Adjust field names if different
+              map.putString("signature", result.signature()); // Adjust field names if different
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSNativeBiometricsApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+
+    }
   }
 
   // region Helpers
+
+  private TSWebAuthnAuthenticationData convertWebAuthnAuthenticationData(
+      java.util.Map<String, Object> rawData) {
+
+    String webAuthnSessionId = (String) rawData.get("webauthnSessionId");
+
+    TSWebAuthnAuthenticationData authData = new TSWebAuthnAuthenticationData(
+        webAuthnSessionId,
+        new TSCredentialRequestOptions(
+            (String) rawData.get("challenge"),
+            (String) rawData.get("rawChallenge"),
+            (String) rawData.get("userVerification"),
+            null,
+            null,
+            (String) rawData.get("rpId"),
+            null,
+            (String) rawData.get("attestation")));
+
+    return authData;
+  }
 
   @Nullable
   private AppCompatActivity getAppCompatActivity() {

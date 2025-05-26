@@ -249,9 +249,7 @@ class TsAuthentication: NSObject {
       }
     }
   }
-  
-  //    final public func approvalNativeBiometrics(username: String, challenge: String, completion: @escaping TSAuthenticationSDK.TSNativeBiometricsApprovalCompletion)
-  
+    
   private func convertWebAuthnAuthenticationData(_ rawData: [String: AnyHashable]) -> TSAuthenticationSDK.TSWebAuthnAuthenticationData? {
     
     let userData = TSAuthenticationSDK.TSWebAuthnUserData(id: nil, name: nil, displayName: nil)

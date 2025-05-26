@@ -23,6 +23,8 @@ export type State = {
 
 export default class HomeScreen extends React.Component<Props, State> {
 
+    private verticalSpaceBetweenButtons: number = 12;
+
     constructor(props: Props) {
         super(props);
         this.state = {
@@ -62,7 +64,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderStatusLabel(): ReactElement {
         return (
-            <View style={{ marginTop: 2 }}>
+            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                 <Text style={styles.statusLabel}>{this.props.errorMessage}</Text>
             </View>
         )
@@ -70,7 +72,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderStartAuthenticationButton(): ReactElement {
         return (
-            <View style={{ marginTop: 2 }}>
+            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                 <Button
                     title="Start Authentication"
                     onPress={() => this.props.onStartAuthentication(this.state.username)}
@@ -81,7 +83,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderNativeBiometricsButton(): ReactElement {
         return (
-            <View style={{ marginTop: 2 }}>
+            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                 <Button
                     title="Native Biometrics"
                     onPress={() => this.props.onStartNativeBiometrics(this.state.username)}
@@ -92,7 +94,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderApprovalWebAuthnButton(): ReactElement {
         return (
-            <View style={{ marginTop: 2 }}>
+            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                 <Button
                     title="Approval WebAuthn"
                     onPress={() => this.props.onApprovalWebAuthn(this.state.username, { "somekey": "some value" })}
@@ -103,7 +105,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderApprovalWebAuthnWithDataButton(): ReactElement {
         return (
-            <View style={{ marginTop: 12 }}>
+            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                 <Button
                     title="Approval WebAuthn With Data"
                     onPress={() => { this.handlePressApprovalWebAuthndata() }}
@@ -114,7 +116,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
    private renderApprovalNativeBiometricsButton(): ReactElement {
         return (
-            <View style={{ marginTop: 12 }}>
+            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                 <Button
                     title="Approval with Native Biometrics"
                     onPress={() => { this.handlePressApprovalNativeBiometrics() }}

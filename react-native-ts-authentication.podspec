@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "15.0" }
   s.source       = { :git => "https://github.com/TransmitSecurity/react-native-ts-authentication.git", :tag => "#{s.version}" }
 
-  s.dependency 'TSAuthentication', '~> 1.1.13'
+  s.dependency 'TSAuthentication', '~> 1.1.14'
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
   # Use install_modules_dependencies helper to install the dependencies if React Native version >=0.71.0.

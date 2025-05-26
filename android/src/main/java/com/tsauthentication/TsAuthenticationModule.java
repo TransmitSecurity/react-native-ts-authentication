@@ -68,15 +68,13 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             reactContext,
             clientId,
             baseUrl,
-            domain
-        );
+            domain);
       } else {
         TSAuthentication.initialize(
             reactContext,
             clientId,
             baseUrl,
-            null
-        );
+            null);
       }
       promise.resolve(true);
     }
@@ -125,7 +123,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   }
 
   // Authentication
-  
+
   @ReactMethod
   @NonNull
   public void authenticateWebAuthn(String username, Promise promise) {
@@ -241,24 +239,31 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   // region Approvals
 
-//  func approvalWebAuthn(
-//    username: String?,
-//    approvalData: [String: String],
-//    options: [String],
-//    resolve: @escaping RCTPromiseResolveBlock,
-//    reject: @escaping RCTPromiseRejectBlock
-//  )
+  @ReactMethod
+  @NonNull
+  public void approvalWebAuthn(String username, ReadableMap approvalData, ReadableArray options, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
 
+    }
+  }
 
-//  @ReactMethod
-//  @NonNull
-//  public void approvalWebAuthn(String username, ReadableMap approvalData, ReadableArray options, Promise promise) {
-//    if (reactContext.getCurrentActivity() != null) {
-//
-//
-//
-//    }
-//  }
+  @ReactMethod
+  @NonNull
+  public void approvalWebAuthnWithData(
+      ReadableMap rawAuthenticationData,
+      ReadableArray options,
+      Promise promise) {
+
+  }
+
+  @ReactMethod
+  @NonNull
+  public void approvalNativeBiometrics(
+      String username,
+      String challenge,
+      Promise promise) {
+
+  }
 
   // region Helpers
 

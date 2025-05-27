@@ -6,7 +6,7 @@
  */
 
 import React, { type ReactElement } from 'react';
-import { View, StyleSheet, Text, TextInput, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Alert, TouchableOpacity, Keyboard } from 'react-native';
 
 export type Props = {
     onStartAuthentication: (username: string) => void;
@@ -78,7 +78,14 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     private renderButton(title: string, onPress: () => void): ReactElement {
         return (
-            <TouchableOpacity style={styles.button} activeOpacity={0.85} onPress={onPress}>
+            <TouchableOpacity
+                style={styles.button}
+                activeOpacity={0.85}
+                onPress={() => {
+                    Keyboard.dismiss();
+                    onPress();
+                }}
+            >
                 <Text style={styles.buttonText}>{title}</Text>
             </TouchableOpacity>
         );

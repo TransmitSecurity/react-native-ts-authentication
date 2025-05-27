@@ -69,7 +69,7 @@ class TsAuthentication: NSObject {
               resolve(["result": response.result])
             case .failure(let error):
               logger.log("Finished native registration with error: \(error)")
-              reject(self.kTag, nil, error)
+              reject(self.kTag, error.localizedDescription, error)
             }
           }
       }

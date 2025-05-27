@@ -6,7 +6,7 @@
  */
 
 import React, { type ReactElement } from 'react';
-import { View, StyleSheet, Text, Button, TextInput, Alert } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Alert, TouchableOpacity } from 'react-native';
 
 export type Props = {
     onStartAuthentication: (username: string) => void;
@@ -35,48 +35,59 @@ export default class HomeScreen extends React.Component<Props, State> {
     render() {
         return (
             <View style={styles.container}>
-                <View style={{ marginTop: 20 }} />
-                <Text style={styles.sectionTitle}>{"Authentication SDK"}</Text>
-                {this.renderUsernameInputField()}
-                {this.renderStartAuthenticationButton()}
-                {this.renderNativeBiometricsButton()}
-                {this.renderApprovalWebAuthnButton()}
-                {this.renderApprovalWebAuthnWithDataButton()}
-                {this.renderApprovalNativeBiometricsButton()}
-                {this.renderStatusLabel()}
+                <Text style={styles.sectionTitle}>Authentication SDK</Text>
+                <View style={styles.card}>
+                    {this.renderUsernameInputField()}
+                    <View style={styles.buttonGroup}>
+                        {this.renderStartAuthenticationButton()}
+                        {this.renderNativeBiometricsButton()}
+                        {this.renderApprovalWebAuthnButton()}
+                        {this.renderApprovalWebAuthnWithDataButton()}
+                        {this.renderApprovalNativeBiometricsButton()}
+                    </View>
+                    {this.renderStatusLabel()}
+                </View>
             </View>
         );
     }
 
     private renderUsernameInputField(): ReactElement {
         return (
-            <View style={{ marginTop: 12 }}>
+            <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Username</Text>
                 <TextInput
                     style={styles.input}
                     onChangeText={(text) => this.setState({ username: text })}
                     value={this.state.username}
                     placeholder="Type your username here"
                     autoFocus={true}
+                    placeholderTextColor="#aaa"
                 />
             </View>
         )
     }
 
     private renderStatusLabel(): ReactElement {
+        if (!this.props.errorMessage) return <></>;
         return (
-            <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
+            <View style={styles.statusContainer}>
                 <Text style={styles.statusLabel}>{this.props.errorMessage}</Text>
             </View>
         )
     }
 
+    private renderButton(title: string, onPress: () => void): ReactElement {
+        return (
+            <TouchableOpacity style={styles.button} activeOpacity={0.85} onPress={onPress}>
+                <Text style={styles.buttonText}>{title}</Text>
+            </TouchableOpacity>
+        );
+    }
+
     private renderStartAuthenticationButton(): ReactElement {
         return (
             <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
-                <Button
-                    title="Start Authentication"
-                    onPress={() => this.props.onStartAuthentication(this.state.username)}
-                />
+                {this.renderButton('Start Authentication', () => this.props.onStartAuthentication(this.state.username))}
             </View>
         )
     }
@@ -84,10 +95,7 @@ export default class HomeScreen extends React.Component<Props, State> {
     private renderNativeBiometricsButton(): ReactElement {
         return (
             <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
-                <Button
-                    title="Native Biometrics"
-                    onPress={() => this.props.onStartNativeBiometrics(this.state.username)}
-                />
+                {this.renderButton('Native Biometrics', () => this.props.onStartNativeBiometrics(this.state.username))}
             </View>
         )
     }
@@ -95,10 +103,7 @@ export default class HomeScreen extends React.Component<Props, State> {
     private renderApprovalWebAuthnButton(): ReactElement {
         return (
             <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
-                <Button
-                    title="Approval WebAuthn"
-                    onPress={() => this.props.onApprovalWebAuthn(this.state.username, { "somekey": "some value" })}
-                />
+                {this.renderButton('Approval WebAuthn', () => this.props.onApprovalWebAuthn(this.state.username, { "somekey": "some value" }))}
             </View>
         )
     }
@@ -106,21 +111,15 @@ export default class HomeScreen extends React.Component<Props, State> {
     private renderApprovalWebAuthnWithDataButton(): ReactElement {
         return (
             <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
-                <Button
-                    title="Approval WebAuthn With Data"
-                    onPress={() => { this.handlePressApprovalWebAuthndata() }}
-                />
+                {this.renderButton('Approval WebAuthn With Data', () => { this.handlePressApprovalWebAuthndata() })}
             </View>
         )
     }
 
-   private renderApprovalNativeBiometricsButton(): ReactElement {
+    private renderApprovalNativeBiometricsButton(): ReactElement {
         return (
             <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
-                <Button
-                    title="Approval with Native Biometrics"
-                    onPress={() => { this.handlePressApprovalNativeBiometrics() }}
-                />
+                {this.renderButton('Approval with Native Biometrics', () => { this.handlePressApprovalNativeBiometrics() })}
             </View>
         )
     }
@@ -166,34 +165,87 @@ export default class HomeScreen extends React.Component<Props, State> {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'flex-start',
-        padding: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f6fa',
+        padding: 16,
+    },
+    card: {
+        width: '100%',
+        maxWidth: 400,
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    sectionTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        textAlign: 'center',
+        color: '#222',
+        marginBottom: 24,
+        letterSpacing: 0.5,
+    },
+    inputContainer: {
+        marginBottom: 20,
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#555',
+        marginBottom: 12, // increased from 6 to 12 for more vertical spacing
+        marginLeft: 4,
+    },
+    input: {
+        height: 44,
+        borderWidth: 1,
+        borderColor: '#d1d8e0',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        fontSize: 16,
+        backgroundColor: '#fafbfc',
+        color: '#222',
+    },
+    buttonGroup: {
+        marginTop: 8,
+        marginBottom: 8,
+    },
+    statusContainer: {
+        marginTop: 18,
+        alignItems: 'center',
     },
     statusLabel: {
         fontSize: 16,
         fontWeight: '600',
         textAlign: 'center',
-        color: 'red',
-    },
-    sectionTitle: {
-        fontSize: 24,
-        fontWeight: '600',
-        textAlign: 'center',
-        color: 'black',
-    },
-    sectionDescription: {
-        marginTop: 40,
-        marginBottom: 10,
-        fontSize: 18,
-        fontWeight: '400',
-        textAlign: 'center',
-        color: 'black',
-    },
-    input: {
-        height: 40,
-        margin: 12,
-        borderWidth: 1,
-        padding: 10,
+        color: '#e74c3c',
+        backgroundColor: '#fdecea',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 8,
+        marginTop: 8,
+    },
+    button: {
+        backgroundColor: '#4f8cff',
+        borderRadius: 8,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        marginVertical: 6,
+        alignItems: 'center',
+        shadowColor: '#4f8cff',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        letterSpacing: 0.2,
     },
 });

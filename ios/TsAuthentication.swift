@@ -251,31 +251,32 @@ class TsAuthentication: NSObject {
   }
     
   private func convertWebAuthnAuthenticationData(_ rawData: [String: AnyHashable]) -> TSAuthenticationSDK.TSWebAuthnAuthenticationData? {
-    guard let rawUserData = rawData["userData"] as? [String: AnyHashable],
+    guard let credentialRequestOptions = rawData["credentialRequestOptions"] as? [String: AnyHashable],
           let webauthnSessionId = rawData["webauthnSessionId"] as? String else {
       return nil
     }
+        
+    let rawUserData: [String: AnyHashable]? = credentialRequestOptions["userData"] as? [String: AnyHashable]
     
     let userData = TSAuthenticationSDK.TSWebAuthnUserData(
-      id: rawUserData["id"] as? String,
-      name: rawUserData["name"] as? String,
-      displayName: rawUserData["displayName"] as? String
+      id: rawUserData?["id"] as? String,
+      name: rawUserData?["name"] as? String,
+      displayName: rawUserData?["displayName"] as? String
     )
-    
-    let rawRequestOptionsData: [String: AnyHashable]? = rawData["requestOptionsData"] as? [String: AnyHashable]
     
     let optionsData = TSWebAuthnAuthenticationCredentialRequestOptionsData(
-      challenge: rawRequestOptionsData?["challenge"] as? String,
+      challenge: credentialRequestOptions["challenge"] as? String,
       allowCredentials: nil,
-      userVerification: rawRequestOptionsData?["userVerification"] as? String,
-      rpId: rawRequestOptionsData?["rpId"] as? String,
+      userVerification: credentialRequestOptions["userVerification"] as? String,
+      rpId: credentialRequestOptions["rpId"] as? String,
       user: userData
     )
-    
+        
     let authenticationData = TSAuthenticationSDK.TSWebAuthnAuthenticationData(
       webauthnSessionId: webauthnSessionId,
       credentialRequestOptions: optionsData
     )
+    print(authenticationData)
     
     return authenticationData
   }

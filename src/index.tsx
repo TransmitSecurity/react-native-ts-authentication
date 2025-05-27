@@ -61,7 +61,20 @@ export namespace TSAuthenticationSDK {
     result: string;
   }
 
-
+  export interface WebAuthnAuthenticationData {
+    webauthnSessionId: string;
+    credentialRequestOptions: {
+      challenge: string;
+      allowCredentials: string[] | null;
+      userVerification: string | null;
+      rpId: string | null;
+      user: {
+        id: string | null;
+        name: string | null;
+        displayName: string | null;
+      };
+    };
+  }
 
   export const enum WebAuthnAuthenticationOptions {
     preferLocalCredantials = "preferLocalCredantials"
@@ -78,7 +91,7 @@ export namespace TSAuthenticationSDK {
     allowCredentials: string[] | null;
     userVerification: string | null;
     rpId: string | null;
-    user: TSWebAuthnUserData;
+    user: TSWebAuthnUserData; 
   }
   
   export interface TSWebAuthnAuthenticationData {
@@ -102,7 +115,7 @@ export interface TSAuthenticationSDKModule {
   ) => Promise<TSAuthenticationSDK.ApprovalResults>;
   
   approvalWebAuthnWithData: (
-    rawAuthenticationData: { [key: string]: any }, 
+    rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData, 
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]
   ) => Promise<TSAuthenticationSDK.ApprovalResults>;
   

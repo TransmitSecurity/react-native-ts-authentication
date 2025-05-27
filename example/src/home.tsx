@@ -132,7 +132,7 @@ export default class HomeScreen extends React.Component<Props, State> {
         }
 
         const userData = {
-            id: this.state.username,
+            id: "b7e2c1a2-4e3d-4b7a-9c2e-1f8e6a7d5c3b",
             name: this.state.username,
             displayName: this.state.username
         };
@@ -140,8 +140,8 @@ export default class HomeScreen extends React.Component<Props, State> {
         const optionsData = {
             challenge: "some challenge string",
             allowCredentials: null,
-            userVerification: null,
-            rpId: "the relying party id",
+            userVerification: "some user verification string",
+            rpId: "the relying party id string",
             userData
         };
 

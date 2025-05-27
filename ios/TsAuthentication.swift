@@ -251,19 +251,29 @@ class TsAuthentication: NSObject {
   }
     
   private func convertWebAuthnAuthenticationData(_ rawData: [String: AnyHashable]) -> TSAuthenticationSDK.TSWebAuthnAuthenticationData? {
+    guard let rawUserData = rawData["userData"] as? [String: AnyHashable],
+          let webauthnSessionId = rawData["webauthnSessionId"] as? String else {
+      return nil
+    }
     
-    let userData = TSAuthenticationSDK.TSWebAuthnUserData(id: nil, name: nil, displayName: nil)
+    let userData = TSAuthenticationSDK.TSWebAuthnUserData(
+      id: rawUserData["id"] as? String,
+      name: rawUserData["name"] as? String,
+      displayName: rawUserData["displayName"] as? String
+    )
+    
+    let rawRequestOptionsData: [String: AnyHashable]? = rawData["requestOptionsData"] as? [String: AnyHashable]
     
     let optionsData = TSWebAuthnAuthenticationCredentialRequestOptionsData(
-      challenge: "",
+      challenge: rawRequestOptionsData?["challenge"] as? String,
       allowCredentials: nil,
-      userVerification: nil,
-      rpId: nil,
+      userVerification: rawRequestOptionsData?["userVerification"] as? String,
+      rpId: rawRequestOptionsData?["rpId"] as? String,
       user: userData
     )
     
     let authenticationData = TSAuthenticationSDK.TSWebAuthnAuthenticationData(
-      webauthnSessionId: "",
+      webauthnSessionId: webauthnSessionId,
       credentialRequestOptions: optionsData
     )
     

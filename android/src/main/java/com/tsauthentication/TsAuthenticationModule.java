@@ -292,7 +292,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             @Override
             public void success(TSWebAuthnApprovalResult result) {
               WritableMap map = new WritableNativeMap();
-              map.putString("result", result.result()); // Adjust field access as needed
+              map.putString("result", result.result());
               promise.resolve(map);
             }
 
@@ -332,8 +332,8 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             @Override
             public void success(TSNativeBiometricsApprovalResult result) {
               WritableMap map = new WritableNativeMap();
-              map.putString("publicKeyId", result.keyId()); // Adjust field names if different
-              map.putString("signature", result.signature()); // Adjust field names if different
+              map.putString("publicKeyId", result.keyId());
+              map.putString("signature", result.signature());
               promise.resolve(map);
             }
 
@@ -342,7 +342,6 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
               promise.reject("result", error.toString());
             }
           });
-
     }
   }
 

@@ -32,6 +32,7 @@ export namespace TSAuthenticationSDK {
     publicKey: string;
     publicKeyId: string;
     os: string;
+    keyType: string;
   }
 
   export interface TSBiometricsAuthenticationResult {

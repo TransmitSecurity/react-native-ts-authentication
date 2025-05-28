@@ -194,6 +194,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
               map.putString("publicKeyId", tsBiometricsRegistrationResult.keyId());
               map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
               map.putString("os", "Android");
+              map.putString("keyType", tsBiometricsRegistrationResult.keyType());
               promise.resolve(map);
             }
 

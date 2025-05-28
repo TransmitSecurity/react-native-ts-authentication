@@ -133,7 +133,8 @@ class TsAuthentication: NSObject {
             resolve([
               "publicKey": publicKey,
               "publicKeyId": publicKeyId,
-              "os": "iOS"
+              "os": "iOS",
+              "keyType": response.keyType
             ])
           case .failure(let error):
             reject(self.kTag, error.localizedDescription, error)

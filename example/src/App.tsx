@@ -229,7 +229,7 @@ export default class App extends React.Component<any, State> {
     this.approvalWebAuthnWithData(rawAuthenticationData);
   }
 
-  private approvalWebAuthnWithData = async (rawAuthenticationData: { [key: string]: any; }): Promise<void> => {
+  private approvalWebAuthnWithData = async (rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData): Promise<void> => {
     try {
       const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
       Alert.alert("Approval result: ", JSON.stringify(result));

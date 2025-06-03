@@ -138,24 +138,31 @@ export default class HomeScreen extends React.Component<Props, State> {
             return 
         }
 
-        const userData = {
-            id: "b7e2c1a2-4e3d-4b7a-9c2e-1f8e6a7d5c3b",
-            name: this.state.username,
-            displayName: this.state.username
+        const approvalData: TSAuthenticationSDK.WebAuthnAuthenticationData = {
+            webauthnSessionId: "some-web-authn-session-id",
+            credentialRequestOptions: {
+                challenge: "some-challenge-string",
+                rawChallenge: "some-raw-challenge-string",
+                allowCredentials: [
+                    {
+                        id: "credential-id-123",
+                        name: "mock-credential",
+                        displayName: "Mock Credential",
+                        type: "public-key",
+                        transports: ["usb", "nfc"]
+                    }
+                ],
+                userVerification: "preferred",
+                transports: ["usb", "nfc"],
+                rpId: "mock-rp-id",
+                userData: {
+                    id: this.state.username,
+                    name: this.state.username,
+                    displayName: this.state.username
+                },
+                attestation: "direct"
+            }
         };
-
-        const optionsData = {
-            challenge: "some challenge string",
-            allowCredentials: null,
-            userVerification: "some user verification string",
-            rpId: "the relying party id string",
-            userData
-        };
-
-        const approvalData = {
-            webauthnSessionId: "some webauthn session id",
-            credentialRequestOptions: optionsData
-        }
 
         this.props.onApprovalWebAuthnWithData(approvalData)
     }

@@ -77,17 +77,14 @@ export namespace TSAuthenticationSDK {
   }
 
   export interface WebAuthnAuthenticationCredentialRequestOptions {
-    webauthnSessionId: string;
-    credentialRequestOptions: {
-      challenge: string;
-      rawChallenge?: string | null | undefined;
-      allowCredentials: AllowCredentials[] | null;
-      userVerification: string | null;
-      transports?: string[] | null | undefined;
-      rpId: string | null;
-      userData: UserData;
-      attestation?: string | null | undefined;
-    };
+    challenge: string;
+    rawChallenge?: string | null | undefined;
+    allowCredentials: AllowCredentials[] | null;
+    userVerification: string | null;
+    transports?: string[] | null | undefined;
+    rpId: string | null;
+    userData: UserData;
+    attestation?: string | null | undefined;
   }
 
   export const enum WebAuthnAuthenticationOptions {

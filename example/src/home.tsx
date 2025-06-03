@@ -7,12 +7,13 @@
 
 import React, { type ReactElement } from 'react';
 import { View, StyleSheet, Text, TextInput, Alert, TouchableOpacity, Keyboard } from 'react-native';
+import type { TSAuthenticationSDK } from 'react-native-ts-authentication';
 
 export type Props = {
     onStartAuthentication: (username: string) => void;
     onStartNativeBiometrics: (username: string) => void;
     onApprovalWebAuthn: (username: string, approvalData: { [key: string]: string; }) => void;
-    onApprovalWebAuthnWithData: (rawAuthenticationData: { [key: string]: any; } ) => void;
+    onApprovalWebAuthnWithData: (rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData ) => void;
     onApprovalNativeBiometrics: (username: string) => void;
     errorMessage: string;
 };

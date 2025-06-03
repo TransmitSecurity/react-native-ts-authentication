@@ -38,7 +38,11 @@ import com.transmit.authentication.network.startauth.TSAllowCredentials;
 import com.transmit.authentication.network.startauth.TSCredentialRequestOptions;
 import com.transmit.authentication.network.startauth.TSWebAuthnAuthenticationData;
 
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ReactModule(name = TsAuthenticationModule.NAME)
@@ -284,7 +288,18 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       Promise promise) {
     if (reactContext.getCurrentActivity() != null) {
       Map<String, Object> authDataMap = rawAuthenticationData.toHashMap();
+
+      if (authDataMap == null || authDataMap.isEmpty()) {
+        promise.reject("result", "Invalid authentication data");
+        return;
+      }
+
       TSWebAuthnAuthenticationData authData = this.convertWebAuthnAuthenticationData(authDataMap);
+
+      if (authData == null) {
+        promise.reject("result", "Error converting authentication data.");
+        return;
+      }
 
       TSAuthentication.approvalWebAuthn(
           reactContext.getCurrentActivity(),
@@ -349,23 +364,84 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   // region Helpers
 
   private TSWebAuthnAuthenticationData convertWebAuthnAuthenticationData(
-      java.util.Map<String, Object> rawData) {
+    java.util.Map<String, Object> rawData) {
 
     String webAuthnSessionId = (String) rawData.get("webauthnSessionId");
+    if (webAuthnSessionId == null || webAuthnSessionId.isEmpty()) {
+      return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    java.util.Map<String, Object> rawCredentialRequestOptions =
+      (java.util.Map<String, Object>) rawData.get("credentialRequestOptions");
+    if (rawCredentialRequestOptions == null) {
+      return null;
+    }
+
+    String challenge = (String) rawCredentialRequestOptions.get("challenge");
+    String rawChallenge = (String) rawCredentialRequestOptions.get("rawChallenge");
+    String userVerification = (String) rawCredentialRequestOptions.get("userVerification");
+
+    Object allowCredentialObj = rawCredentialRequestOptions.get("allowCredentials");
+    TSAllowCredentials[] allowCredentials = null;
+    if (allowCredentialObj instanceof Map) {
+      Map<String, Object> allowCredentialMap = (Map<String, Object>) allowCredentialObj;
+      allowCredentials = this.convertAllowCredentials(allowCredentialMap);
+    }
+
+    String rpId = (String) rawCredentialRequestOptions.get("rpId");
+    Double timeout = (Double) rawCredentialRequestOptions.get("timeout");
+
+    String attestation = (String) rawCredentialRequestOptions.get("attestation");
+
+    TSCredentialRequestOptions credentialRequestOptions = new TSCredentialRequestOptions(
+      challenge != null ? challenge : "",
+      rawChallenge,
+      userVerification,
+      (JSONObject) rawCredentialRequestOptions.get("transports"),
+      allowCredentials,
+      rpId,
+      timeout,
+      attestation
+    );
 
     TSWebAuthnAuthenticationData authData = new TSWebAuthnAuthenticationData(
-        webAuthnSessionId,
-        new TSCredentialRequestOptions(
-            (String) rawData.get("challenge"),
-            (String) rawData.get("rawChallenge"),
-            (String) rawData.get("userVerification"),
-            null,
-            null,
-            (String) rawData.get("rpId"),
-            null,
-            (String) rawData.get("attestation")));
+      webAuthnSessionId,
+      credentialRequestOptions
+    );
 
     return authData;
+  }
+
+  @SuppressWarnings("unchecked")
+  private TSAllowCredentials[] convertAllowCredentials(Map<String, Object> credentialRequestOptions) {
+    Object allowCredentialsObj = credentialRequestOptions.get("allowCredentials");
+    if (!(allowCredentialsObj instanceof List)) {
+      return new TSAllowCredentials[0];
+    }
+    List<?> allowCredentialsArray = (List<?>) allowCredentialsObj;
+    List<TSAllowCredentials> result = new ArrayList<>();
+    for (Object item : allowCredentialsArray) {
+      if (item instanceof Map) {
+        Map<String, Object> rawAllowCredential = (Map<String, Object>) item;
+        String[] transports = null;
+        Object transportsObj = rawAllowCredential.get("transports");
+        if (transportsObj instanceof List) {
+          List<?> transportsList = (List<?>) transportsObj;
+          transports = transportsList.stream()
+            .filter(String.class::isInstance)
+            .map(String.class::cast)
+            .toArray(String[]::new);
+        }
+        TSAllowCredentials data = new TSAllowCredentials(
+          (String) rawAllowCredential.get("type"),
+          (String) rawAllowCredential.get("id"),
+          transports
+        );
+        result.add(data);
+      }
+    }
+    return result.toArray(new TSAllowCredentials[0]);
   }
 
   @Nullable

@@ -62,18 +62,31 @@ export namespace TSAuthenticationSDK {
     result: string;
   }
 
-  export interface WebAuthnAuthenticationData {
+  export interface UserData {
+    id: string | null;
+    name: string | null;
+    displayName: string | null;
+  }
+
+  export interface AllowCredentials {
+    id: string;
+    name: string | null | undefined;
+    displayName: string | null | undefined;
+    type: string | null | undefined;
+    transports?: string[] | null | undefined;
+  }
+
+  export interface WebAuthnAuthenticationCredentialRequestOptions {
     webauthnSessionId: string;
     credentialRequestOptions: {
       challenge: string;
-      allowCredentials: string[] | null;
+      rawChallenge?: string | null | undefined;
+      allowCredentials: AllowCredentials[] | null;
       userVerification: string | null;
+      transports?: string[] | null | undefined;
       rpId: string | null;
-      user: {
-        id: string | null;
-        name: string | null;
-        displayName: string | null;
-      };
+      userData: UserData;
+      attestation?: string | null | undefined;
     };
   }
 
@@ -87,17 +100,9 @@ export namespace TSAuthenticationSDK {
     displayName: string | null;
   }
 
-  export interface TSWebAuthnAuthenticationCredentialRequestOptionsData {
-    challenge: string;
-    allowCredentials: string[] | null;
-    userVerification: string | null;
-    rpId: string | null;
-    user: TSWebAuthnUserData; 
-  }
-  
-  export interface TSWebAuthnAuthenticationData {
+  export interface WebAuthnAuthenticationData {
     webauthnSessionId: string;
-    credentialRequestOptions: TSWebAuthnAuthenticationCredentialRequestOptionsData;
+    credentialRequestOptions: WebAuthnAuthenticationCredentialRequestOptions;
   }
 }
 
@@ -114,12 +119,12 @@ export interface TSAuthenticationSDKModule {
     approvalData: { [key: string]: string },
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]
   ) => Promise<TSAuthenticationSDK.ApprovalResults>;
-  
+
   approvalWebAuthnWithData: (
-    rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData, 
+    rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData,
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]
   ) => Promise<TSAuthenticationSDK.ApprovalResults>;
-  
+
   approvalNativeBiometrics: (
     username: string,
     challenge: string
@@ -165,13 +170,13 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
     username: string | null,
     approvalData: { [key: string]: string },
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]): Promise<TSAuthenticationSDK.ApprovalResults> {
-      return TsAuthentication.approvalWebAuthn(username, approvalData, options);
+    return TsAuthentication.approvalWebAuthn(username, approvalData, options);
   }
 
   approvalWebAuthnWithData(
-    rawAuthenticationData: { [key: string]: any }, 
+    rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData,
     options: TSAuthenticationSDK.WebAuthnAuthenticationOptions[]): Promise<TSAuthenticationSDK.ApprovalResults> {
-      return TsAuthentication.approvalWebAuthnWithData(rawAuthenticationData, options);
+    return TsAuthentication.approvalWebAuthnWithData(rawAuthenticationData, options);
   }
 
   approvalNativeBiometrics(

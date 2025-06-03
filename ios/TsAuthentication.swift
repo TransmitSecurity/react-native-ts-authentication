@@ -267,7 +267,7 @@ class TsAuthentication: NSObject {
     
     let optionsData = TSWebAuthnAuthenticationCredentialRequestOptionsData(
       challenge: credentialRequestOptions["challenge"] as? String,
-      allowCredentials: nil,
+      allowCredentials: convertAllowCredentials(credentialRequestOptions),
       userVerification: credentialRequestOptions["userVerification"] as? String,
       rpId: credentialRequestOptions["rpId"] as? String,
       user: userData
@@ -277,9 +277,21 @@ class TsAuthentication: NSObject {
       webauthnSessionId: webauthnSessionId,
       credentialRequestOptions: optionsData
     )
-    print(authenticationData)
     
     return authenticationData
+  }
+  
+  private func convertAllowCredentials(_ credentialRequestOptions: [String: AnyHashable]) -> [TSWebAuthnAllowCredentialsData]? {
+    guard let allowCredentialsArray = credentialRequestOptions["allowCredentials"] as? [[String: AnyHashable]] else {
+      return nil
+    }
+    
+    return allowCredentialsArray.map { rawAllowCredential in
+      TSWebAuthnAllowCredentialsData(
+        id: rawAllowCredential["id"] as? String,
+        name: rawAllowCredential["name"] as? String,
+        displayName: rawAllowCredential["displayName"] as? String
+    )}
   }
   
   private func convertWebAuthnOptions(_ rawOptions: [String]) -> TSAuthenticationSDK.TSAuthentication.WebAuthnAuthenticationOptions {

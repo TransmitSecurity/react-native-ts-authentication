@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { SafeAreaView } from 'react-native';
-import TSAuthenticationSDKModule from 'react-native-ts-authentication';
+import { Alert, SafeAreaView } from 'react-native';
+import TSAuthenticationSDKModule, { TSAuthenticationSDK } from 'react-native-ts-authentication';
 import HomeScreen from './home';
 import config from './config';
 import localUserStore from './utils/local-user-store';
@@ -122,6 +122,7 @@ export default class App extends React.Component<any, State> {
       const response = await TSAuthenticationSDKModule.registerNativeBiometrics(username);
       const accessToken = await this.mockServer.getAccessToken();
       const success = await this.mockServer.completeBiometricsRegistration(accessToken.token, response);
+      
       if (success) {
         localUserStore.addUserID(username);
         this.navigateToAuthenticatedUserScreen(username, true);
@@ -212,7 +213,7 @@ export default class App extends React.Component<any, State> {
   private approvalWebAuthn = async(username: string, approvalData: { [key: string]: string; }): Promise<void> => {
     try {
       const result = await TSAuthenticationSDKModule.approvalWebAuthn(username, approvalData, []);
-      console.log("Approval result: ", result);
+      Alert.alert("Approval result: ", JSON.stringify(result));
     } catch (error: any) {
       this.setState({ errorMessage: `${error}` });
     }
@@ -220,7 +221,7 @@ export default class App extends React.Component<any, State> {
 
   // Approvals WebAuthn with Authentication Data
 
-  public onApprovalWebAuthnWithData = async (rawAuthenticationData: { [key: string]: any; }) => {    
+  public onApprovalWebAuthnWithData = async (rawAuthenticationData:  TSAuthenticationSDK.WebAuthnAuthenticationData) => {    
     if (rawAuthenticationData === null) {
       this.setState({ errorMessage: 'Please enter authentication data' });
       return;
@@ -231,7 +232,7 @@ export default class App extends React.Component<any, State> {
   private approvalWebAuthnWithData = async (rawAuthenticationData: { [key: string]: any; }): Promise<void> => {
     try {
       const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
-      console.log("Approval result: ", result);
+      Alert.alert("Approval result: ", JSON.stringify(result));
     } catch (error: any) {
       this.setState({ errorMessage: `${error}` });
     }
@@ -247,7 +248,7 @@ export default class App extends React.Component<any, State> {
     
     try {
       const result = await TSAuthenticationSDKModule.approvalNativeBiometrics(username, "challenge");
-      console.log("Approval result: ", result);
+      Alert.alert("Approval result: ", JSON.stringify(result));
     }  catch (error: any) {
       this.setState({ errorMessage: `${error}` });
     }

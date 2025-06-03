@@ -38,6 +38,7 @@ import com.transmit.authentication.network.startauth.TSAllowCredentials;
 import com.transmit.authentication.network.startauth.TSCredentialRequestOptions;
 import com.transmit.authentication.network.startauth.TSWebAuthnAuthenticationData;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -384,9 +385,9 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
     Object allowCredentialObj = rawCredentialRequestOptions.get("allowCredentials");
     TSAllowCredentials[] allowCredentials = null;
-    if (allowCredentialObj instanceof Map) {
-      Map<String, Object> allowCredentialMap = (Map<String, Object>) allowCredentialObj;
-      allowCredentials = this.convertAllowCredentials(allowCredentialMap);
+    if (allowCredentialObj instanceof List) {
+      List<?> allowCredentialsList = (List<?>) allowCredentialObj;
+      allowCredentials = this.convertAllowCredentials(allowCredentialsList);
     }
 
     String rpId = (String) rawCredentialRequestOptions.get("rpId");
@@ -394,11 +395,29 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
     String attestation = (String) rawCredentialRequestOptions.get("attestation");
 
+    Object transportsObj = rawCredentialRequestOptions.get("transports");
+    JSONObject transportsJson = null;
+    try {
+      if (transportsObj instanceof List) {
+        List<?> transportsList = (List<?>) transportsObj;
+        JSONArray transportsArray = new JSONArray();
+        for (Object t : transportsList) {
+          if (t instanceof String) {
+            transportsArray.put(t);
+          }
+        }
+        transportsJson = new JSONObject();
+        transportsJson.put("transports", transportsArray);
+      }
+    } catch (Exception e) {
+      transportsJson = null;
+    }
+
     TSCredentialRequestOptions credentialRequestOptions = new TSCredentialRequestOptions(
       challenge != null ? challenge : "",
       rawChallenge,
       userVerification,
-      (JSONObject) rawCredentialRequestOptions.get("transports"),
+      transportsJson,
       allowCredentials,
       rpId,
       timeout,
@@ -414,12 +433,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   }
 
   @SuppressWarnings("unchecked")
-  private TSAllowCredentials[] convertAllowCredentials(Map<String, Object> credentialRequestOptions) {
-    Object allowCredentialsObj = credentialRequestOptions.get("allowCredentials");
-    if (!(allowCredentialsObj instanceof List)) {
-      return new TSAllowCredentials[0];
-    }
-    List<?> allowCredentialsArray = (List<?>) allowCredentialsObj;
+  private TSAllowCredentials[] convertAllowCredentials(List<?> allowCredentialsArray) {
     List<TSAllowCredentials> result = new ArrayList<>();
     for (Object item : allowCredentialsArray) {
       if (item instanceof Map) {

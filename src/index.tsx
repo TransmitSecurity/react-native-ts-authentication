@@ -73,7 +73,7 @@ export namespace TSAuthenticationSDK {
     name: string | null | undefined;
     displayName: string | null | undefined;
     type: string | null | undefined;
-    transports?: string[] | null | undefined;
+    transports?: object | null | undefined;
   }
 
   export interface WebAuthnAuthenticationCredentialRequestOptions {

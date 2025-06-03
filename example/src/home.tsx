@@ -149,11 +149,11 @@ export default class HomeScreen extends React.Component<Props, State> {
                         name: "mock-credential",
                         displayName: "Mock Credential",
                         type: "public-key",
-                        transports: ["usb", "nfc"]
+                        transports: null
                     }
                 ],
                 userVerification: "preferred",
-                transports: ["usb", "nfc"],
+                transports: null,
                 rpId: "mock-rp-id",
                 userData: {
                     id: this.state.username,

@@ -16,6 +16,8 @@ export type Props = {
     onApprovalWebAuthn: (username: string, approvalData: { [key: string]: string; }) => void;
     onApprovalWebAuthnWithData: (rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData ) => void;
     onApprovalNativeBiometrics: (username: string) => void;
+    onRegisterPINCode: (username: string, pinCode: string) => void;
+    onCommitPinRegistration: (contextIdentifier: string) => void;
     errorMessage: string;
 };
 
@@ -269,12 +271,9 @@ export default class HomeScreen extends React.Component<Props, State> {
         this.onPinRegistered(pinInput!);
     }
 
-    private onPinRegistered = (pin: string) => {
-        // Here you can handle the PIN registration logic
-        console.log('Registered PIN:', pin);
-        // Optionally, update state or localUserStore here
+    private onPinRegistered = (pinCode: string) => {
+        this.props.onRegisterPINCode(this.state.username, pinCode);
     }
-
 }
 
 const styles = StyleSheet.create({

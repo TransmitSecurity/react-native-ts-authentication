@@ -183,20 +183,20 @@ class TsAuthentication: NSObject {
     reject: @escaping RCTPromiseRejectBlock
   ) {
     
-      runBlockOnMain {
-        TSAuthentication.shared.approvalWebAuthn(approvalData: approvalData, username: username, options: self.convertWebAuthnOptions(options)) { [weak self] results in
-          guard let self = self else { return }
-          
-          switch results {
-          case .success(let result):
-            resolve([
-              "result": result.result
-            ])
-          case .failure(let error):
-            reject(self.kTag, error.localizedDescription, error)
-          }
+    runBlockOnMain {
+      TSAuthentication.shared.approvalWebAuthn(approvalData: approvalData, username: username, options: self.convertWebAuthnOptions(options)) { [weak self] results in
+        guard let self = self else { return }
+        
+        switch results {
+        case .success(let result):
+          resolve([
+            "result": result.result
+          ])
+        case .failure(let error):
+          reject(self.kTag, error.localizedDescription, error)
         }
       }
+    }
   }
   
   @objc(approvalWebAuthnWithData:options:withResolver:withRejecter:)
@@ -214,7 +214,7 @@ class TsAuthentication: NSObject {
     runBlockOnMain {
       TSAuthentication.shared.approvalWebAuthn(authenticationData, options: self.convertWebAuthnOptions(options)) { [weak self] results in
         guard let self = self else { return }
-
+        
         switch results {
         case .success(let results):
           resolve([
@@ -237,7 +237,7 @@ class TsAuthentication: NSObject {
     runBlockOnMain {
       TSAuthentication.shared.approvalNativeBiometrics(username: username, challenge: challenge)  { [weak self] results in
         guard let self = self else { return }
-
+        
         switch results {
         case .success(let results):
           resolve([
@@ -250,13 +250,13 @@ class TsAuthentication: NSObject {
       }
     }
   }
-    
+  
   private func convertWebAuthnAuthenticationData(_ rawData: [String: AnyHashable]) -> TSAuthenticationSDK.TSWebAuthnAuthenticationData? {
     guard let credentialRequestOptions = rawData["credentialRequestOptions"] as? [String: AnyHashable],
           let webauthnSessionId = rawData["webauthnSessionId"] as? String else {
       return nil
     }
-        
+    
     let rawUserData: [String: AnyHashable]? = credentialRequestOptions["userData"] as? [String: AnyHashable]
     
     let userData = TSAuthenticationSDK.TSWebAuthnUserData(
@@ -272,7 +272,7 @@ class TsAuthentication: NSObject {
       rpId: credentialRequestOptions["rpId"] as? String,
       user: userData
     )
-        
+    
     let authenticationData = TSAuthenticationSDK.TSWebAuthnAuthenticationData(
       webauthnSessionId: webauthnSessionId,
       credentialRequestOptions: optionsData
@@ -291,7 +291,7 @@ class TsAuthentication: NSObject {
         id: rawAllowCredential["id"] as? String,
         name: rawAllowCredential["name"] as? String,
         displayName: rawAllowCredential["displayName"] as? String
-    )}
+      )}
   }
   
   private func convertWebAuthnOptions(_ rawOptions: [String]) -> TSAuthenticationSDK.TSAuthentication.WebAuthnAuthenticationOptions {
@@ -302,6 +302,42 @@ class TsAuthentication: NSObject {
     }
     
     return options
+  }
+  
+  // MARK: - PIN Authenticator
+  
+  @objc(registerPin:pinCode:withResolver:withRejecter:)
+  func registerPin(
+    username: String,
+    pinCode: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    runBlockOnMain {
+      TSAuthentication.shared.registerPinCode(username: username, pinCode: pinCode) { [weak self] results in
+        guard let self = self else { return }
+        
+        switch results {
+        case .success(let response):
+          resolve([
+            "publicKeyId": response.publicKeyId,
+            "publicKey": response.publicKey,
+            "keyType": response.keyType
+          ])
+          
+//          final public let publicKey: String
+//
+//          final public let publicKeyId: String
+//
+//          final public let keyType: String
+//
+//          final public let registrationContext: TSAuthenticationSDK.TSPinCodeRegistrationContext
+
+        case .failure(let error):
+          reject(self.kTag, error.localizedDescription, error)
+        }
+      }
+    }
   }
   
   // MARK: - Utility

@@ -37,6 +37,10 @@ import com.transmit.authentication.DeviceInfo;
 import com.transmit.authentication.network.startauth.TSAllowCredentials;
 import com.transmit.authentication.network.startauth.TSCredentialRequestOptions;
 import com.transmit.authentication.network.startauth.TSWebAuthnAuthenticationData;
+import com.transmit.authentication.pincode.TSPinCodeAuthenticationError;
+import com.transmit.authentication.pincode.TSPinCodeAuthenticationResult;
+import com.transmit.authentication.pincode.TSPinCodeRegistrationError;
+import com.transmit.authentication.pincode.TSPinCodeRegistrationResult;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -65,11 +69,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void initializeSDK() {
-    try {
-      TSAuthentication.initializeSDK(reactContext);
-    } catch (TSAuthenticationInitializeException e) {
-      throw new RuntimeException(e);
-    }
+    TSAuthentication.initializeSDK(reactContext);
   }
 
   @ReactMethod
@@ -356,6 +356,40 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSNativeBiometricsApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+    }
+  }
+
+  // region PIN Authenticator
+
+  @ReactMethod
+  @NonNull
+  public void registerPin(String username, String pinCode, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
+
+      TSAuthentication.registerPinCode(
+        username,
+        pinCode,
+        new TSAuthCallback<TSPinCodeRegistrationResult, TSPinCodeRegistrationError>() {
+            @Override
+            public void success(TSPinCodeRegistrationResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("publicKeyId", result.keyId());
+              map.putString("publicKey", result.publicKey());
+              map.putString("keyType", result.keyType());
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSPinCodeRegistrationError error) {
               promise.reject("result", error.toString());
             }
           });

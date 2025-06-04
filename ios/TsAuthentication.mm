@@ -18,7 +18,9 @@ RCT_EXTERN_METHOD(approvalWebAuthn:(NSString *)username approvalData:(NSDictiona
 RCT_EXTERN_METHOD(approvalWebAuthnWithData:(NSDictionary*)rawAuthenticationData options:(NSArray *)options withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(approvalNativeBiometrics:(NSString *)username challenge:(NSString*)challenge withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 
-RCT_EXTERN_METHOD(registerPin:(NSString *)username pinCode:(NSString*)pinCode withResolver:(RCTPromiseResolveBlock)resolve
+RCT_EXTERN_METHOD(registerPinCode:(NSString *)username pinCode:(NSString*)pinCode withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(commitPinRegistration:(NSString *)contextIdentifier withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 
 

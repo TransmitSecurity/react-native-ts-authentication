@@ -35,6 +35,13 @@ export namespace TSAuthenticationSDK {
     keyType: string;
   }
 
+  export interface TSPinCodeRegistrationCompletion {
+    publicKeyId: string;
+    publicKey: string;
+    keyType: string;
+    contextIdentifier: string;
+  }
+
   export interface TSBiometricsAuthenticationResult {
     publicKeyId: string;
     signature: string;
@@ -127,6 +134,10 @@ export interface TSAuthenticationSDKModule {
     challenge: string
   ) => Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult>;
 
+
+  registerPinCode: (username: string, pinCode: string) => Promise<TSAuthenticationSDK.TSPinCodeRegistrationCompletion>;
+  commitPinRegistration: (contextIdentifier: string) => Promise<void>;
+
   getDeviceInfo: () => Promise<TSAuthenticationSDK.DeviceInfo>;
   isWebAuthnSupported: () => Promise<boolean>;
 }
@@ -181,6 +192,14 @@ class AuthenticationSDK implements TSAuthenticationSDKModule {
     challenge: string
   ): Promise<TSAuthenticationSDK.TSBiometricsAuthenticationResult> {
     return TsAuthentication.approvalNativeBiometrics(username, challenge);
+  }
+
+  registerPinCode(username: string, pinCode: string): Promise<TSAuthenticationSDK.TSPinCodeRegistrationCompletion> {
+    return TsAuthentication.registerPinCode(username, pinCode);
+  }
+
+  commitPinRegistration(contextIdentifier: string): Promise<void> {
+    return TsAuthentication.commitPinRegistration(contextIdentifier);
   }
 
   getDeviceInfo(): Promise<TSAuthenticationSDK.DeviceInfo> {

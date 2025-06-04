@@ -4,7 +4,8 @@ import TSAuthenticationSDK
 class TsAuthentication: NSObject {
   
   private let kTag = "TSAuthentication"
-  
+  private var contextStore: [String: AnyObject] = [:]
+    
   // MARK: - SDK Init
   
   @objc(initializeSDK:withRejecter:)
@@ -306,8 +307,8 @@ class TsAuthentication: NSObject {
   
   // MARK: - PIN Authenticator
   
-  @objc(registerPin:pinCode:withResolver:withRejecter:)
-  func registerPin(
+  @objc(registerPinCode:pinCode:withResolver:withRejecter:)
+  func registerPinCode(
     username: String,
     pinCode: String,
     resolve: @escaping RCTPromiseResolveBlock,
@@ -319,24 +320,40 @@ class TsAuthentication: NSObject {
         
         switch results {
         case .success(let response):
+          
+          let identifier = self.generateContextIdentifier()
+          self.storeContextWithIdentifier(identifier, context: response.registrationContext)
+          
           resolve([
             "publicKeyId": response.publicKeyId,
             "publicKey": response.publicKey,
-            "keyType": response.keyType
+            "keyType": response.keyType,
+            "contextIdentifier": identifier
           ])
           
-//          final public let publicKey: String
-//
-//          final public let publicKeyId: String
-//
-//          final public let keyType: String
-//
-//          final public let registrationContext: TSAuthenticationSDK.TSPinCodeRegistrationContext
-
         case .failure(let error):
           reject(self.kTag, error.localizedDescription, error)
         }
       }
+    }
+  }
+  
+  @objc(commitPinRegistration:withResolver:withRejecter:)
+  func commitPinRegistration(
+    contextIdentifier: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard !contextIdentifier.isEmpty, var pinRegistrationContext = getContextWithIdentifier(contextIdentifier) as? TSAuthenticationSDK.TSRegistrationContext else {
+      reject(self.kTag, "Invalid context identifier", nil)
+      return
+    }
+    
+    do {
+      try pinRegistrationContext.commit()
+      resolve(true)
+    } catch {
+      reject(self.kTag, error.localizedDescription, error)
     }
   }
   
@@ -373,6 +390,25 @@ class TsAuthentication: NSObject {
         resolve(isSupported)
       }
     }
+  
+  // MARK: - Context Handler Management
+  
+  private func generateContextIdentifier() -> String {
+    let uuid = UUID().uuidString
+    return uuid
+  }
+  
+  private func storeContextWithIdentifier(_ identifier: String, context: AnyObject) {
+    contextStore[identifier] = context
+  }
+  
+  private func removeContextWithIdentifier(_ identifier: String) {
+    contextStore[identifier] = nil
+  }
+  
+  private func getContextWithIdentifier(_ identifier: String) -> AnyObject? {
+    return contextStore[identifier] as AnyObject?
+  }
   
   // MARK: - Threading
   

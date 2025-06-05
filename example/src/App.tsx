@@ -57,7 +57,7 @@ export default class App extends React.Component<any, State> {
               onApprovalWebAuthnWithData={this.onApprovalWebAuthnWithData}
               onApprovalNativeBiometrics={this.onApprovalNativeBiometrics}
               onRegisterPINCode={this.onRegisterPINCode}
-              onCommitPinRegistration={ this.onCommitPinRegistration }
+              onAuthenticatePinCode={this.onAuthenticatePinCode}
               errorMessage={this.state.errorMessage}
             />
           ) : (
@@ -309,7 +309,8 @@ export default class App extends React.Component<any, State> {
     this.setState({ errorMessage: '' });
     try {
       const result = await TSAuthenticationSDKModule.registerPinCode(username, pinCode);
-      // Send the registration result to your server if needed, then commit.
+      console.log("Pin Code Registration Result: ", result);
+      // Send the registration result to your server if needed, then commit pin registration.
       await TSAuthenticationSDKModule.commitPinRegistration(result.contextIdentifier);
       localUserStore.setHasRegisteredPIN(username, true);
       Alert.alert("PIN Code Registration", "PIN code registered successfully");
@@ -320,8 +321,22 @@ export default class App extends React.Component<any, State> {
     }
   }
 
-  private onCommitPinRegistration = async (contextIdentifier: string): Promise<void> => {
-
+  private onAuthenticatePinCode = async (username: string, pinCode: string): Promise<void> => {
+    if (username === '' || pinCode === '') {
+      this.setState({ errorMessage: 'Please enter a username and PIN code' });
+      return;
+    }
+    this.setState({ loading: true });
+    
+    const challenge = this.randomString();
+    try {
+      const result = await TSAuthenticationSDKModule.authenticatePinCode(username, pinCode, challenge);
+      Alert.alert("Authentication result: ", JSON.stringify(result));
+    } catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    } finally {
+      this.setState({ loading: false });
+    }
   }
 
   // Navigation

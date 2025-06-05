@@ -22,7 +22,7 @@ RCT_EXTERN_METHOD(registerPinCode:(NSString *)username pinCode:(NSString*)pinCod
                   withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(commitPinRegistration:(NSString *)contextIdentifier withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
-
+RCT_EXTERN_METHOD(authenticatePinCode:(NSString *)username pinCode:(NSString*)pinCode challenge:(NSString*)challenge withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(getDeviceInfo:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(isWebAuthnSupported:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)

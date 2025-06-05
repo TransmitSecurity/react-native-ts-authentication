@@ -17,9 +17,14 @@ export type Props = {
     onApprovalWebAuthnWithData: (rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData ) => void;
     onApprovalNativeBiometrics: (username: string) => void;
     onRegisterPINCode: (username: string, pinCode: string) => void;
-    onCommitPinRegistration: (contextIdentifier: string) => void;
+    onAuthenticatePinCode: (username: string, pinCode: string) => void;
     errorMessage: string;
 };
+
+const enum PinAuthenticatorMode {
+    REGISTER = 'register',
+    AUTHENTICATE = 'authenticate',
+}
 
 export type State = {
     username: string;
@@ -27,12 +32,13 @@ export type State = {
     showPinDialog?: boolean;
     pinInput?: string;
     pinError?: string;
+    pinAuthenticatorMode: PinAuthenticatorMode;
 };
 
 export default class HomeScreen extends React.Component<Props, State> {
 
     private verticalSpaceBetweenButtons: number = 10;
-    private defaultUsername: string = 'shachar';
+    private defaultUsername: string = 'user5';
 
     constructor(props: Props) {
         super(props);
@@ -42,6 +48,7 @@ export default class HomeScreen extends React.Component<Props, State> {
             showPinDialog: false,
             pinInput: '',
             pinError: '',
+            pinAuthenticatorMode: PinAuthenticatorMode.REGISTER,
         };
     }
 
@@ -150,7 +157,7 @@ export default class HomeScreen extends React.Component<Props, State> {
                 <View style={{ marginTop: this.verticalSpaceBetweenButtons }}>
                     {!this.state.hasRegisteredPIN
                         ? this.renderButton('Register PIN', () => this.handlePressRegisterPin())
-                        : this.renderButton('Authenticate with PIN', () => Alert.alert('PIN Auth', 'Authenticate with PIN pressed'))}
+                        : this.renderButton('Authenticate with PIN', () => this.handlePressAuthenticatePinCode())}
                 </View>
                 {this.renderPinDialog()}
             </>
@@ -247,11 +254,28 @@ export default class HomeScreen extends React.Component<Props, State> {
     // PIN Authentication methods
 
     private handlePressRegisterPin = () => {
-        this.setState({ showPinDialog: true, pinInput: '', pinError: '' });
+        this.setState({
+            showPinDialog: true, 
+            pinInput: '', 
+            pinError: '',
+            pinAuthenticatorMode: PinAuthenticatorMode.REGISTER
+        });
+    }
+
+    private handlePressAuthenticatePinCode = () => {
+        if (!this.state.username || this.state.username.trim() === '') {
+            Alert.alert("Error", "Please enter a User ID");
+            return;
+        }
+        this.setState({ 
+            showPinDialog: true, 
+            pinInput: '', 
+            pinError: '', 
+            pinAuthenticatorMode: PinAuthenticatorMode.AUTHENTICATE 
+        });
     }
 
     private handlePinInputChange = (text: string) => {
-        // Only allow numbers
         if (/^\d{0,4}$/.test(text)) {
             this.setState({ pinInput: text, pinError: '' });
         }
@@ -262,17 +286,18 @@ export default class HomeScreen extends React.Component<Props, State> {
     }
 
     private handlePinDialogDone = () => {
-        const { pinInput } = this.state;
-        if (!pinInput || pinInput.length !== 4) {
-            this.setState({ pinError: 'Please enter a 4-digit PIN.' });
+        const { pinInput, username } = this.state;
+        if (!pinInput || pinInput.length !== 4 || !username || username.trim() === '') {
+            this.setState({ pinError: 'Please enter a User ID and a 4-digit PIN.' });
             return;
         }
         this.setState({ showPinDialog: false, pinError: '' });
-        this.onPinRegistered(pinInput!);
-    }
 
-    private onPinRegistered = (pinCode: string) => {
-        this.props.onRegisterPINCode(this.state.username, pinCode);
+        if (this.state.pinAuthenticatorMode === PinAuthenticatorMode.REGISTER) {
+             this.props.onRegisterPINCode(this.state.username, pinInput);
+        } else {
+            this.props.onAuthenticatePinCode(this.state.username, pinInput);
+        }
     }
 }
 

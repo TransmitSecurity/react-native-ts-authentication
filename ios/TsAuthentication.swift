@@ -349,11 +349,43 @@ class TsAuthentication: NSObject {
       return
     }
     
+    removeContextWithIdentifier(contextIdentifier)
+    
     do {
       try pinRegistrationContext.commit()
       resolve(true)
     } catch {
       reject(self.kTag, error.localizedDescription, error)
+    }
+  }
+  
+  @objc(authenticatePinCode:pinCode:challenge:withResolver:withRejecter:)
+  func authenticatePinCode(
+    username: String,
+    pinCode: String,
+    challenge: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    runBlockOnMain {
+      TSAuthentication.shared.authenticatePinCode(
+        username: username,
+        pinCode: pinCode,
+        challenge: challenge
+      ) { [weak self] results in
+        guard let self = self else { return }
+        
+        switch results {
+        case .success(let response):
+          resolve([
+            "publicKeyId": response.publicKeyId,
+            "signature": response.signature,
+            "challenge": response.challenge
+          ])
+        case .failure(let error):
+          reject(self.kTag, error.localizedDescription, error)
+        }
+      }
     }
   }
   

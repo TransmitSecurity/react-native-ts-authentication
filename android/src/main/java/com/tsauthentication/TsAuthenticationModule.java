@@ -39,6 +39,7 @@ import com.transmit.authentication.network.startauth.TSCredentialRequestOptions;
 import com.transmit.authentication.network.startauth.TSWebAuthnAuthenticationData;
 import com.transmit.authentication.pincode.TSPinCodeAuthenticationError;
 import com.transmit.authentication.pincode.TSPinCodeAuthenticationResult;
+import com.transmit.authentication.pincode.TSPinCodeRegistrationContext;
 import com.transmit.authentication.pincode.TSPinCodeRegistrationError;
 import com.transmit.authentication.pincode.TSPinCodeRegistrationResult;
 
@@ -49,11 +50,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @ReactModule(name = TsAuthenticationModule.NAME)
 public class TsAuthenticationModule extends ReactContextBaseJavaModule {
+
   public static final String NAME = "TsAuthentication";
-  ReactApplicationContext reactContext;
+  private ReactApplicationContext reactContext;
+  private Map<String, Object> contextStore = new HashMap<>();
+
 
   public TsAuthenticationModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -381,10 +386,16 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         new TSAuthCallback<TSPinCodeRegistrationResult, TSPinCodeRegistrationError>() {
             @Override
             public void success(TSPinCodeRegistrationResult result) {
+              TSPinCodeRegistrationContext context = result.registrationContext();
+              String contextIdentifier = generateContextIdentifier();
+              storeContextWithIdentifier(contextIdentifier, context);
+
               WritableMap map = new WritableNativeMap();
               map.putString("publicKeyId", result.keyId());
               map.putString("publicKey", result.publicKey());
               map.putString("keyType", result.keyType());
+              map.putString("contextIdentifier", contextIdentifier);
+
               promise.resolve(map);
             }
 
@@ -394,6 +405,69 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             }
           });
     }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void commitPinRegistration(String contextIdentifier, Promise promise) {
+    TSPinCodeRegistrationContext context =
+      (TSPinCodeRegistrationContext) getContextWithIdentifier(contextIdentifier);
+
+    if (context != null) {
+      promise.reject("result", "PIN Registration Context not found for the context identifier provided");
+    } else {
+      removeContextWithIdentifier(contextIdentifier);
+      context.commit();
+      promise.resolve(true);
+    }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void onAuthenticatePinCode(String username, String pinCode, String challenge, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
+
+      TSAuthentication.authenticatePinCode(username, pinCode, challenge, new TSAuthCallback<TSPinCodeAuthenticationResult, TSPinCodeAuthenticationError>() {
+        @Override
+        public void success(TSPinCodeAuthenticationResult result) {
+          WritableMap map = new WritableNativeMap();
+          map.putString("publicKeyId", result.keyId());
+          map.putString("signature", result.signature());
+          map.putString("challenge", result.challenge());
+
+          promise.resolve(map);
+        }
+
+        @Override
+        public void error(TSPinCodeAuthenticationError error) {
+          promise.reject("result", error.toString());
+        }
+      });
+    }
+  }
+
+  // region Context Store
+
+  private String generateContextIdentifier() {
+    return UUID.randomUUID().toString();
+  }
+
+  private void storeContextWithIdentifier(String identifier, Object context) {
+    contextStore.put(identifier, context);
+  }
+
+  private void removeContextWithIdentifier(String identifier) {
+    contextStore.remove(identifier);
+  }
+
+  private Object getContextWithIdentifier(String identifier) {
+    return contextStore.get(identifier);
   }
 
   // region Helpers

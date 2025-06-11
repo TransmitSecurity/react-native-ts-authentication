@@ -299,10 +299,10 @@ export default class App extends React.Component<any, State> {
 
   // PIN Code Registration / Authentication
 
-  private onRegisterPINCode = async (rawUsername: string, pinCode: string): Promise<void> => {
+  private onRegisterPINCode = async (rawUsername: string, pinCode: string): Promise<boolean> => {
     if (rawUsername === '' || pinCode === '') {
       this.setState({ errorMessage: 'Please enter a username and PIN code' });
-      return;
+      return false;
     }
     this.setState({ loading: true });
     const username = rawUsername.toLowerCase();
@@ -314,17 +314,19 @@ export default class App extends React.Component<any, State> {
       await TSAuthenticationSDKModule.commitPinRegistration(result.contextIdentifier);
       localUserStore.setHasRegisteredPIN(username, true);
       Alert.alert("PIN Code Registration", "PIN code registered successfully");
+      return true;
     } catch (error: any) {
       this.setState({ errorMessage: `${error}` });
+      return false;
     } finally {
       this.setState({ loading: false });
     }
   }
 
-  private onAuthenticatePinCode = async (username: string, pinCode: string): Promise<void> => {
+  private onAuthenticatePinCode = async (username: string, pinCode: string): Promise<boolean> => {
     if (username === '' || pinCode === '') {
       this.setState({ errorMessage: 'Please enter a username and PIN code' });
-      return;
+      return false;
     }
     this.setState({ loading: true });
     
@@ -332,8 +334,10 @@ export default class App extends React.Component<any, State> {
     try {
       const result = await TSAuthenticationSDKModule.authenticatePinCode(username, pinCode, challenge);
       Alert.alert("Authentication result: ", JSON.stringify(result));
+      return true;
     } catch (error: any) {
       this.setState({ errorMessage: `${error}` });
+      return false;
     } finally {
       this.setState({ loading: false });
     }

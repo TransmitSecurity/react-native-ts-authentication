@@ -16,8 +16,8 @@ export type Props = {
     onApprovalWebAuthn: (username: string, approvalData: { [key: string]: string; }) => void;
     onApprovalWebAuthnWithData: (rawAuthenticationData: TSAuthenticationSDK.WebAuthnAuthenticationData ) => void;
     onApprovalNativeBiometrics: (username: string) => void;
-    onRegisterPINCode: (username: string, pinCode: string) => void;
-    onAuthenticatePinCode: (username: string, pinCode: string) => void;
+    onRegisterPINCode: (username: string, pinCode: string) => Promise<boolean>;
+    onAuthenticatePinCode: (username: string, pinCode: string) => Promise<boolean>;
     errorMessage: string;
 };
 
@@ -285,7 +285,7 @@ export default class HomeScreen extends React.Component<Props, State> {
         this.setState({ showPinDialog: false, pinInput: '', pinError: '' });
     }
 
-    private handlePinDialogDone = () => {
+    private handlePinDialogDone = async () => {
         const { pinInput, username } = this.state;
         if (!pinInput || pinInput.length !== 4 || !username || username.trim() === '') {
             this.setState({ pinError: 'Please enter a User ID and a 4-digit PIN.' });
@@ -294,7 +294,10 @@ export default class HomeScreen extends React.Component<Props, State> {
         this.setState({ showPinDialog: false, pinError: '' });
 
         if (this.state.pinAuthenticatorMode === PinAuthenticatorMode.REGISTER) {
-             this.props.onRegisterPINCode(this.state.username, pinInput);
+             const results = await this.props.onRegisterPINCode(this.state.username, pinInput);
+            if (results) {
+                this.setState({ hasRegisteredPIN: true });
+            }
         } else {
             this.props.onAuthenticatePinCode(this.state.username, pinInput);
         }

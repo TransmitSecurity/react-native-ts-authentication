@@ -35,6 +35,8 @@ class LocalUserStore {
     }
 
     public hasRegisteredPIN = (userID: string): boolean => {
+        console.log('Checking PIN status for user:', userID);
+        console.log(this.store.pinStatus)
         return !!this.store.pinStatus[userID];
     }
 
@@ -55,7 +57,11 @@ class LocalUserStore {
     private updateUserStore = async (): Promise<void> => {
         try {
             let storeJson = JSON.stringify(this.store);
-            await AsyncStorage.setItem(this.kUserStoreStorageKey, storeJson);
+            const results = await AsyncStorage.setItem(this.kUserStoreStorageKey, storeJson);
+
+            console.log('User store updated successfully:', results);
+            console.log('Current user store:', this.store);
+
         } catch (e) {
             console.log('Error saving user store', e);
         }

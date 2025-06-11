@@ -371,7 +371,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
-  public void registerPin(String username, String pinCode, Promise promise) {
+  public void registerPinCode(String username, String pinCode, Promise promise) {
     if (reactContext.getCurrentActivity() != null) {
 
       AppCompatActivity appCompatActivity = getAppCompatActivity();
@@ -413,7 +413,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     TSPinCodeRegistrationContext context =
       (TSPinCodeRegistrationContext) getContextWithIdentifier(contextIdentifier);
 
-    if (context != null) {
+    if (context == null) {
       promise.reject("result", "PIN Registration Context not found for the context identifier provided");
     } else {
       removeContextWithIdentifier(contextIdentifier);
@@ -424,7 +424,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
-  public void onAuthenticatePinCode(String username, String pinCode, String challenge, Promise promise) {
+  public void authenticatePinCode(String username, String pinCode, String challenge, Promise promise) {
     if (reactContext.getCurrentActivity() != null) {
 
       AppCompatActivity appCompatActivity = getAppCompatActivity();

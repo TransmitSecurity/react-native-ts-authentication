@@ -275,3 +275,41 @@ Transmit Security, https://github.com/TransmitSecurity
 ## License
 
 This project is licensed under the MIT license. See the LICENSE file for more info.
+
+### Register PIN Code
+```js
+onRegisterPINCode = async (username: string, pinCode: string): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.registerPinCode(username, pinCode);
+        // use result.contextIdentifier to commit the registration
+        await TSAuthenticationSDKModule.commitPinRegistration(result.contextIdentifier);
+        // Optionally, update your local user store or UI here
+    } catch (error) {
+        console.error(`Error registering PIN code: ${error}`);
+    }
+}
+```
+
+### Commit PIN Registration
+```js
+commitPinRegistration = async (contextIdentifier: string): Promise<void> => {
+    try {
+        await TSAuthenticationSDKModule.commitPinRegistration(contextIdentifier);
+        // PIN registration is now committed
+    } catch (error) {
+        console.error(`Error committing PIN registration: ${error}`);
+    }
+}
+```
+
+### Authenticate with PIN Code
+```js
+authenticatePinCode = async (username: string, pinCode: string): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.authenticatePinCode(username, pinCode);
+        // use the result string to complete PIN authentication in your backend.
+    } catch (error) {
+        console.error(`Error authenticating with PIN code: ${error}`);
+    }
+}
+```

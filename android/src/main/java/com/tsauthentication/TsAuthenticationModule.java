@@ -11,10 +11,14 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.transmit.authentication.TSDeviceInfoError;
+import com.transmit.authentication.TSWebAuthnApprovalError;
+import com.transmit.authentication.TSWebAuthnApprovalResult;
 import com.transmit.authentication.TSWebAuthnAuthenticationError;
 import com.transmit.authentication.AuthenticationResult;
 import com.transmit.authentication.RegistrationResult;
@@ -26,16 +30,35 @@ import com.transmit.authentication.biometrics.TSBiometricsAuthError;
 import com.transmit.authentication.biometrics.TSBiometricsAuthResult;
 import com.transmit.authentication.biometrics.TSBiometricsRegistrationError;
 import com.transmit.authentication.biometrics.TSBiometricsRegistrationResult;
+import com.transmit.authentication.biometrics.TSNativeBiometricsApprovalError;
+import com.transmit.authentication.biometrics.TSNativeBiometricsApprovalResult;
 import com.transmit.authentication.exceptions.TSAuthenticationInitializeException;
-import com.transmit.authentication.network.completereg.DeviceInfo;
+import com.transmit.authentication.DeviceInfo;
+import com.transmit.authentication.network.startauth.TSAllowCredentials;
+import com.transmit.authentication.network.startauth.TSCredentialRequestOptions;
+import com.transmit.authentication.network.startauth.TSWebAuthnAuthenticationData;
+import com.transmit.authentication.pincode.TSPinCodeAuthenticationError;
+import com.transmit.authentication.pincode.TSPinCodeAuthenticationResult;
+import com.transmit.authentication.pincode.TSPinCodeRegistrationContext;
+import com.transmit.authentication.pincode.TSPinCodeRegistrationError;
+import com.transmit.authentication.pincode.TSPinCodeRegistrationResult;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @ReactModule(name = TsAuthenticationModule.NAME)
 public class TsAuthenticationModule extends ReactContextBaseJavaModule {
+
   public static final String NAME = "TsAuthentication";
-  ReactApplicationContext reactContext;
+  private ReactApplicationContext reactContext;
+  private Map<String, Object> contextStore = new HashMap<>();
+
 
   public TsAuthenticationModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -51,11 +74,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void initializeSDK() {
-    try {
-      TSAuthentication.initializeSDK(reactContext);
-    } catch (TSAuthenticationInitializeException e) {
-      throw new RuntimeException(e);
-    }
+    TSAuthentication.initializeSDK(reactContext);
   }
 
   @ReactMethod
@@ -66,16 +85,12 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       if (domain.length() > 0) {
         TSAuthentication.initialize(
             reactContext,
-            clientId,
-            baseUrl,
-            domain
+            clientId
         );
       } else {
         TSAuthentication.initialize(
             reactContext,
-            clientId,
-            baseUrl,
-            null
+            clientId
         );
       }
       promise.resolve(true);
@@ -125,6 +140,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   }
 
   // Authentication
+
   @ReactMethod
   @NonNull
   public void authenticateWebAuthn(String username, Promise promise) {
@@ -188,6 +204,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
               map.putString("publicKeyId", tsBiometricsRegistrationResult.keyId());
               map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
               map.putString("os", "Android");
+              map.putString("keyType", tsBiometricsRegistrationResult.keyType());
               promise.resolve(map);
             }
 
@@ -236,6 +253,317 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             }
           });
     }
+  }
+
+  // region Approvals
+
+  @ReactMethod
+  @NonNull
+  public void approvalWebAuthn(String username, ReadableMap approvalData, ReadableArray options, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+      Map<String, String> approvalDataMap = new HashMap<>();
+      for (Map.Entry<String, Object> entry : approvalData.toHashMap().entrySet()) {
+        approvalDataMap.put(entry.getKey(), entry.getValue().toString());
+      }
+
+      TSAuthentication.approvalWebAuthn(
+          reactContext.getCurrentActivity(),
+          username,
+          approvalDataMap,
+          new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
+            @Override
+            public void success(TSWebAuthnApprovalResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("result", result.result());
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSWebAuthnApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+    }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void approvalWebAuthnWithData(
+      ReadableMap rawAuthenticationData,
+      ReadableArray options,
+      Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+      Map<String, Object> authDataMap = rawAuthenticationData.toHashMap();
+
+      if (authDataMap == null || authDataMap.isEmpty()) {
+        promise.reject("result", "Invalid authentication data");
+        return;
+      }
+
+      TSWebAuthnAuthenticationData authData = this.convertWebAuthnAuthenticationData(authDataMap);
+
+      if (authData == null) {
+        promise.reject("result", "Error converting authentication data.");
+        return;
+      }
+
+      TSAuthentication.approvalWebAuthn(
+          reactContext.getCurrentActivity(),
+          authData,
+          new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
+            @Override
+            public void success(TSWebAuthnApprovalResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("result", result.result());
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSWebAuthnApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+    }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void approvalNativeBiometrics(
+      String username,
+      String challenge,
+      Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
+
+      Map<String, String> biometricsString = getBiometricsStrings();
+      BiometricPromptTexts promptTexts = new BiometricPromptTexts(
+          biometricsString.get("titleTxt"),
+          biometricsString.get("subtitleTxt"),
+          biometricsString.get("cancelTxt"));
+
+      TSAuthentication.approvalNativeBiometrics(
+          appCompatActivity,
+          username,
+          challenge,
+          promptTexts,
+          new TSAuthCallback<TSNativeBiometricsApprovalResult, TSNativeBiometricsApprovalError>() {
+            @Override
+            public void success(TSNativeBiometricsApprovalResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("publicKeyId", result.keyId());
+              map.putString("signature", result.signature());
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSNativeBiometricsApprovalError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+    }
+  }
+
+  // region PIN Authenticator
+
+  @ReactMethod
+  @NonNull
+  public void registerPinCode(String username, String pinCode, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
+
+      TSAuthentication.registerPinCode(
+        username,
+        pinCode,
+        new TSAuthCallback<TSPinCodeRegistrationResult, TSPinCodeRegistrationError>() {
+            @Override
+            public void success(TSPinCodeRegistrationResult result) {
+              TSPinCodeRegistrationContext context = result.registrationContext();
+              String contextIdentifier = generateContextIdentifier();
+              storeContextWithIdentifier(contextIdentifier, context);
+
+              WritableMap map = new WritableNativeMap();
+              map.putString("publicKeyId", result.keyId());
+              map.putString("publicKey", result.publicKey());
+              map.putString("keyType", result.keyType());
+              map.putString("contextIdentifier", contextIdentifier);
+
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSPinCodeRegistrationError error) {
+              promise.reject("result", error.toString());
+            }
+          });
+    }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void commitPinRegistration(String contextIdentifier, Promise promise) {
+    TSPinCodeRegistrationContext context =
+      (TSPinCodeRegistrationContext) getContextWithIdentifier(contextIdentifier);
+
+    if (context == null) {
+      promise.reject("result", "PIN Registration Context not found for the context identifier provided");
+    } else {
+      removeContextWithIdentifier(contextIdentifier);
+      context.commit();
+      promise.resolve(true);
+    }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void authenticatePinCode(String username, String pinCode, String challenge, Promise promise) {
+    if (reactContext.getCurrentActivity() != null) {
+
+      AppCompatActivity appCompatActivity = getAppCompatActivity();
+      if (appCompatActivity == null) {
+        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        return;
+      }
+
+      TSAuthentication.authenticatePinCode(username, pinCode, challenge, new TSAuthCallback<TSPinCodeAuthenticationResult, TSPinCodeAuthenticationError>() {
+        @Override
+        public void success(TSPinCodeAuthenticationResult result) {
+          WritableMap map = new WritableNativeMap();
+          map.putString("publicKeyId", result.keyId());
+          map.putString("signature", result.signature());
+          map.putString("challenge", result.challenge());
+
+          promise.resolve(map);
+        }
+
+        @Override
+        public void error(TSPinCodeAuthenticationError error) {
+          promise.reject("result", error.toString());
+        }
+      });
+    }
+  }
+
+  // region Context Store
+
+  private String generateContextIdentifier() {
+    return UUID.randomUUID().toString();
+  }
+
+  private void storeContextWithIdentifier(String identifier, Object context) {
+    contextStore.put(identifier, context);
+  }
+
+  private void removeContextWithIdentifier(String identifier) {
+    contextStore.remove(identifier);
+  }
+
+  private Object getContextWithIdentifier(String identifier) {
+    return contextStore.get(identifier);
+  }
+
+  // region Helpers
+
+  private TSWebAuthnAuthenticationData convertWebAuthnAuthenticationData(
+    java.util.Map<String, Object> rawData) {
+
+    String webAuthnSessionId = (String) rawData.get("webauthnSessionId");
+    if (webAuthnSessionId == null || webAuthnSessionId.isEmpty()) {
+      return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    java.util.Map<String, Object> rawCredentialRequestOptions =
+      (java.util.Map<String, Object>) rawData.get("credentialRequestOptions");
+    if (rawCredentialRequestOptions == null) {
+      return null;
+    }
+
+    String challenge = (String) rawCredentialRequestOptions.get("challenge");
+    String rawChallenge = (String) rawCredentialRequestOptions.get("rawChallenge");
+    String userVerification = (String) rawCredentialRequestOptions.get("userVerification");
+
+    Object allowCredentialObj = rawCredentialRequestOptions.get("allowCredentials");
+    TSAllowCredentials[] allowCredentials = null;
+    if (allowCredentialObj instanceof List) {
+      List<?> allowCredentialsList = (List<?>) allowCredentialObj;
+      allowCredentials = this.convertAllowCredentials(allowCredentialsList);
+    }
+
+    String rpId = (String) rawCredentialRequestOptions.get("rpId");
+    Double timeout = (Double) rawCredentialRequestOptions.get("timeout");
+
+    String attestation = (String) rawCredentialRequestOptions.get("attestation");
+
+    Object transportsObj = rawCredentialRequestOptions.get("transports");
+    JSONObject transportsJson = null;
+    try {
+      if (transportsObj instanceof List) {
+        List<?> transportsList = (List<?>) transportsObj;
+        JSONArray transportsArray = new JSONArray();
+        for (Object t : transportsList) {
+          if (t instanceof String) {
+            transportsArray.put(t);
+          }
+        }
+        transportsJson = new JSONObject();
+        transportsJson.put("transports", transportsArray);
+      }
+    } catch (Exception e) {
+      transportsJson = null;
+    }
+
+    TSCredentialRequestOptions credentialRequestOptions = new TSCredentialRequestOptions(
+      challenge != null ? challenge : "",
+      rawChallenge,
+      userVerification,
+      transportsJson,
+      allowCredentials,
+      rpId,
+      timeout,
+      attestation
+    );
+
+    TSWebAuthnAuthenticationData authData = new TSWebAuthnAuthenticationData(
+      webAuthnSessionId,
+      credentialRequestOptions
+    );
+
+    return authData;
+  }
+
+  @SuppressWarnings("unchecked")
+  private TSAllowCredentials[] convertAllowCredentials(List<?> allowCredentialsArray) {
+    List<TSAllowCredentials> result = new ArrayList<>();
+    for (Object item : allowCredentialsArray) {
+      if (item instanceof Map) {
+        Map<String, Object> rawAllowCredential = (Map<String, Object>) item;
+        String[] transports = null;
+        Object transportsObj = rawAllowCredential.get("transports");
+        if (transportsObj instanceof List) {
+          List<?> transportsList = (List<?>) transportsObj;
+          transports = transportsList.stream()
+            .filter(String.class::isInstance)
+            .map(String.class::cast)
+            .toArray(String[]::new);
+        }
+        TSAllowCredentials data = new TSAllowCredentials(
+          (String) rawAllowCredential.get("type"),
+          (String) rawAllowCredential.get("id"),
+          transports
+        );
+        result.add(data);
+      }
+    }
+    return result.toArray(new TSAllowCredentials[0]);
   }
 
   @Nullable

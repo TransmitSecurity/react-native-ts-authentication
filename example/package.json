@@ -10,19 +10,28 @@
     "build:ios": "cd ios && xcodebuild -workspace TsAuthenticationExample.xcworkspace -scheme TsAuthenticationExample -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.21.0",
-    "react": "18.2.0",
-    "react-native": "0.72.7",
-    "react-native-simple-store": "^2.0.2"
+    "@react-native-async-storage/async-storage": "^2.1.2",
+    "@react-native-community/cli": "18.0.0",
+    "@react-native-community/cli-platform-android": "18.0.0",
+    "@react-native-community/cli-platform-ios": "18.0.0",
+    "@react-native/babel-preset": "0.79.2",
+    "react": "19.0.0",
+    "react-native": "0.79.2",
+    "react-native-simple-store": "^2.0.3"
+  },
+  "resolutions": {
+    "@types/react": "19.1.0",
+    "react-native-renderer": "19.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@babel/preset-env": "^7.20.0",
-    "@babel/runtime": "^7.20.0",
-    "@react-native/metro-config": "^0.72.11",
-    "babel-plugin-module-resolver": "^5.0.0",
-    "metro-react-native-babel-preset": "0.76.8",
-    "pod-install": "^0.1.0"
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/runtime": "^7.25.0",
+    "@react-native/metro-config": "0.79.2",
+    "@react-native/typescript-config": "0.79.2",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "metro-react-native-babel-preset": "0.77.0",
+    "pod-install": "^0.3.9"
   },
   "engines": {
     "node": ">=16"

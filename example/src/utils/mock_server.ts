@@ -76,21 +76,26 @@ class MockServer {
         const formData = {
             "publicKeyId": biometricsRegistrationResults.publicKeyId,
             "publicKey": biometricsRegistrationResults.publicKey,
-            "os": biometricsRegistrationResults.os
+            "os": biometricsRegistrationResults.os,
+            "encryptionType": biometricsRegistrationResults.keyType
         };
-        
+
         try {
           const resp = await fetch(
               `${this.baseurl}/cis/v1/auth/mobile-biometrics/register`,
               {
                   method: 'POST',
                   headers: {
-                      'Content-Type': 'application/x-www-form-urlencoded',
+                      'Content-Type': 'application/json',
                       Authorization: `Bearer ${accessToken}`
                   },
-                  body: new URLSearchParams(formData).toString()
+                  body: JSON.stringify(formData)
               }
           );
+
+
+          console.log("Respone")
+          console.log(resp)
 
           return resp.status === 200;
 
@@ -109,7 +114,6 @@ class MockServer {
             "key_id": biometricsAuthenticationResults.publicKeyId,
             "user_id": userId,
             "signature": biometricsAuthenticationResults.signature,
-            "challenge": challenge
         };
         
         try {
@@ -160,6 +164,15 @@ class MockServer {
         } catch (error) {
             return Promise.reject(`Error in getAccessToken: ${error}`);
         }
+    }
+
+    public generateChallenge = (length: number = 32): string => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
     }
 }
 export default MockServer;

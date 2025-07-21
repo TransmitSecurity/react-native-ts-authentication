@@ -201,6 +201,68 @@ private randomString = (): string => {
 }
 ```
 
+### Approval with WebAuthn
+```js
+onApprovalWebAuthn = async (username: string, approvalData: { [key: string]: string }): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.approvalWebAuthn(username, approvalData, []);
+        console.log("Approval result: ", result);
+    } catch (error: any) {
+        this.setState({ errorMessage: `${error}` });
+    }
+}
+```
+
+### Approval with WebAuthn with Authentication Data
+```js
+onApprovalWebAuthnWithData = async (rawAuthenticationData: TSWebAuthnAuthenticationData): Promise<void> => {
+   try {
+        const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
+        console.log("Approval result: ", result);
+    } catch (error: any) {
+        this.setState({ errorMessage: `${error}` });
+    }
+}
+```
+
+### Approval with WebAuthn with Native Biometrics
+
+```js
+onApprovalNativeBiometrics = async (username: string) => {
+    try {
+      const result = await TSAuthenticationSDKModule.approvalNativeBiometrics(username, challenge);
+      console.log("Approval result: ", result);
+    }  catch (error: any) {
+      this.setState({ errorMessage: `${error}` });
+    }
+  }
+```
+
+### Register PIN Code
+```js
+onRegisterPINCode = async (username: string, pinCode: string): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.registerPinCode(username, pinCode);
+        // use result.contextIdentifier to commit the registration
+        await TSAuthenticationSDKModule.commitPinRegistration(result.contextIdentifier);
+    } catch (error) {
+        console.error(`Error registering PIN code: ${error}`);
+    }
+}
+```
+
+### Authenticate with PIN Code
+```js
+authenticatePinCode = async (username: string, pinCode: string): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.authenticatePinCode(username, pinCode);
+        // use the result string to complete PIN authentication in your backend.
+    } catch (error) {
+        console.error(`Error authenticating with PIN code: ${error}`);
+    }
+}
+```
+
 ### Information about the device
 
 #### Get Device Info

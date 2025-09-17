@@ -1332,7 +1332,7 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
-  - react-native-ts-authentication (0.1.5):
+  - react-native-ts-authentication (0.1.6):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1355,7 +1355,7 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - TSAuthentication (~> 1.1.15)
+    - TSAuthentication (~> 1.1.16)
     - Yoga
   - React-NativeModulesApple (0.79.2):
     - glog
@@ -1704,7 +1704,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - SocketRocket (0.7.1)
-  - TSAuthentication (1.1.15):
+  - TSAuthentication (1.1.16):
     - TSCoreSDK (~> 1.0.31)
   - TSCoreSDK (1.0.31)
   - Yoga (0.0.0)
@@ -1977,7 +1977,7 @@ SPEC CHECKSUMS:
   React-logger: 8edfcedc100544791cd82692ca5a574240a16219
   React-Mapbuffer: c3f4b608e4a59dd2f6a416ef4d47a14400194468
   React-microtasksnativemodule: 054f34e9b82f02bd40f09cebd4083828b5b2beb6
-  react-native-ts-authentication: a5814fc81a9af8fbc958a42b890a5d39e9c94126
+  react-native-ts-authentication: b593657502c035d70c2974f0d256ee595cab854f
   React-NativeModulesApple: 2c4377e139522c3d73f5df582e4f051a838ff25e
   React-oscompat: ef5df1c734f19b8003e149317d041b8ce1f7d29c
   React-perflogger: 9a151e0b4c933c9205fd648c246506a83f31395d
@@ -2011,7 +2011,7 @@ SPEC CHECKSUMS:
   ReactCommon: 76d2dc87136d0a667678668b86f0fca0c16fdeb0
   RNCAsyncStorage: 39c42c1e478e1f5166d1db52b5055e090e85ad66
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  TSAuthentication: 8d80f31ebc00438ef62baa934d674c03ad43a6d9
+  TSAuthentication: 793b3ca03c1a649479f789270bd609d4a94826d5
   TSCoreSDK: 3c459fa58dc09c44a2ec327cb977268bc78b146c
   Yoga: c758bfb934100bb4bf9cbaccb52557cee35e8bdf
 

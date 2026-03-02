@@ -58,5 +58,13 @@ target 'TsAuthenticationExample' do
       :mac_catalyst_enabled => false
     )
    # __apply_Xcode_12_5_M1_post_install_workaround(installer)
+   
+   xcconfig_paths = Dir.glob("Pods/Target Support Files/**/*.xcconfig")
+     xcconfig_paths.each do |path|
+       text = File.read(path)
+       next unless text.include?("EXCLUDED_ARCHS[sdk=iphonesimulator*] = arm64")
+       text = text.gsub(/^EXCLUDED_ARCHS\[sdk=iphonesimulator\*\]\s*=\s*arm64\s*$/, "")
+       File.write(path, text)
+     end
   end
 end

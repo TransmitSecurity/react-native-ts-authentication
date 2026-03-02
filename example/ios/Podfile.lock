@@ -1332,7 +1332,7 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
-  - react-native-ts-authentication (0.1.6):
+  - react-native-ts-authentication (0.1.7):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1355,7 +1355,7 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - TSAuthentication (~> 1.1.16)
+    - TSAuthentication (~> 1.2.0)
     - Yoga
   - React-NativeModulesApple (0.79.2):
     - glog
@@ -1679,7 +1679,7 @@ PODS:
     - React-logger (= 0.79.2)
     - React-perflogger (= 0.79.2)
     - React-utils (= 0.79.2)
-  - RNCAsyncStorage (2.1.2):
+  - RNCAsyncStorage (2.2.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1704,9 +1704,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - SocketRocket (0.7.1)
-  - TSAuthentication (1.1.16):
-    - TSCoreSDK (~> 1.0.31)
-  - TSCoreSDK (1.0.31)
+  - TSAuthentication (1.2.0):
+    - TSCoreSDK (~> 1.1.0)
+  - TSCoreSDK (1.1.2)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -1977,7 +1977,7 @@ SPEC CHECKSUMS:
   React-logger: 8edfcedc100544791cd82692ca5a574240a16219
   React-Mapbuffer: c3f4b608e4a59dd2f6a416ef4d47a14400194468
   React-microtasksnativemodule: 054f34e9b82f02bd40f09cebd4083828b5b2beb6
-  react-native-ts-authentication: b593657502c035d70c2974f0d256ee595cab854f
+  react-native-ts-authentication: c67e1ffe9e9a3bcb120a9a293f497b149195cd73
   React-NativeModulesApple: 2c4377e139522c3d73f5df582e4f051a838ff25e
   React-oscompat: ef5df1c734f19b8003e149317d041b8ce1f7d29c
   React-perflogger: 9a151e0b4c933c9205fd648c246506a83f31395d
@@ -2009,12 +2009,12 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 04d5eb15eb46be6720e17a4a7fa92940a776e584
   ReactCodegen: c63eda03ba1d94353fb97b031fc84f75a0d125ba
   ReactCommon: 76d2dc87136d0a667678668b86f0fca0c16fdeb0
-  RNCAsyncStorage: 39c42c1e478e1f5166d1db52b5055e090e85ad66
+  RNCAsyncStorage: a1c8cc8a99c32de1244a9cf707bf9d83d0de0f71
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  TSAuthentication: 793b3ca03c1a649479f789270bd609d4a94826d5
-  TSCoreSDK: 3c459fa58dc09c44a2ec327cb977268bc78b146c
+  TSAuthentication: 7a1a261c0fbb4224c507ac4858b3552da6be621b
+  TSCoreSDK: 4f470f7de900589db07d9ff2967b5d733fe1be1d
   Yoga: c758bfb934100bb4bf9cbaccb52557cee35e8bdf
 
-PODFILE CHECKSUM: 7a7b1bf68644c36322ee8a83a19a7731d822d0ac
+PODFILE CHECKSUM: 24037f67389a2e69180ad966846cd8618b3de8ae
 
 COCOAPODS: 1.16.2

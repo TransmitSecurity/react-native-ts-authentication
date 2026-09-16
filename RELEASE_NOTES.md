@@ -1,8 +1,8 @@
-## 0.2.0 September 2026
+## 0.1.9 September 2026
 ### Content
 #### Enhancements
 1. Upgraded native SDKs to iOS `1.2.1` and Android `1.0.30`.
-2. All APIs now reject with a stable `code` string that is identical on iOS and Android. See [Error Handling](README.md#error-handling) for the full list of codes.
+2. All APIs now reject with a stable `code` string that is identical on iOS and Android.
 3. iOS errors now expose the underlying Apple error via `error.userInfo.asAuthorizationErrorCode`, so a dismissed passkey sheet (`ASAuthorizationError` `1001`) is reported as `userCanceled`.
 
 #### Bug Fixes

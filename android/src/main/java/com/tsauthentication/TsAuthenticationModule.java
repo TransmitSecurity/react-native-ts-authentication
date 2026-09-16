@@ -109,7 +109,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     if (reactContext.getCurrentActivity() != null) {
       Boolean isSupported = TSAuthentication.isWebAuthnSupported();
       if (!isSupported) {
-        promise.reject(new Error("Unsupported platform"));
+        promise.reject(TsErrorMapper.UNSUPPORTED_OS_VERSION, "Unsupported platform");
         return;
       }
 
@@ -133,7 +133,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSWebAuthnRegistrationError tsWebAuthnRegistrationError) {
-              promise.reject("result", tsWebAuthnRegistrationError.getErrorMessage());
+              TsErrorMapper.reject(promise, tsWebAuthnRegistrationError);
             }
           });
     }
@@ -158,7 +158,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
-              promise.reject("result", tsWebAuthnAuthenticationError.toString());
+              TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
             }
           });
     }
@@ -182,7 +182,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
-              promise.reject("result", tsWebAuthnAuthenticationError.toString());
+              TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
             }
           });
     }
@@ -210,7 +210,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSBiometricsRegistrationError tsBiometricsRegistrationError) {
-              promise.reject("result", tsBiometricsRegistrationError.toString());
+              TsErrorMapper.reject(promise, tsBiometricsRegistrationError);
             }
           });
     }
@@ -223,7 +223,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
       AppCompatActivity appCompatActivity = getAppCompatActivity();
       if (appCompatActivity == null) {
-        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
         return;
       }
 
@@ -249,7 +249,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSBiometricsAuthError tsBiometricsAuthError) {
-              promise.reject("result", tsBiometricsAuthError.toString());
+              TsErrorMapper.reject(promise, tsBiometricsAuthError);
             }
           });
     }
@@ -280,7 +280,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSWebAuthnApprovalError error) {
-              promise.reject("result", error.toString());
+              TsErrorMapper.reject(promise, error);
             }
           });
     }
@@ -296,14 +296,14 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       Map<String, Object> authDataMap = rawAuthenticationData.toHashMap();
 
       if (authDataMap == null || authDataMap.isEmpty()) {
-        promise.reject("result", "Invalid authentication data");
+        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid authentication data");
         return;
       }
 
       TSWebAuthnAuthenticationData authData = this.convertWebAuthnAuthenticationData(authDataMap);
 
       if (authData == null) {
-        promise.reject("result", "Error converting authentication data.");
+        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Error converting authentication data.");
         return;
       }
 
@@ -320,7 +320,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSWebAuthnApprovalError error) {
-              promise.reject("result", error.toString());
+              TsErrorMapper.reject(promise, error);
             }
           });
     }
@@ -335,7 +335,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     if (reactContext.getCurrentActivity() != null) {
       AppCompatActivity appCompatActivity = getAppCompatActivity();
       if (appCompatActivity == null) {
-        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
         return;
       }
 
@@ -361,7 +361,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSNativeBiometricsApprovalError error) {
-              promise.reject("result", error.toString());
+              TsErrorMapper.reject(promise, error);
             }
           });
     }
@@ -376,7 +376,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
       AppCompatActivity appCompatActivity = getAppCompatActivity();
       if (appCompatActivity == null) {
-        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
         return;
       }
 
@@ -401,7 +401,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSPinCodeRegistrationError error) {
-              promise.reject("result", error.toString());
+              TsErrorMapper.reject(promise, error);
             }
           });
     }
@@ -414,7 +414,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       (TSPinCodeRegistrationContext) getContextWithIdentifier(contextIdentifier);
 
     if (context == null) {
-      promise.reject("result", "PIN Registration Context not found for the context identifier provided");
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "PIN Registration Context not found for the context identifier provided");
     } else {
       removeContextWithIdentifier(contextIdentifier);
       context.commit();
@@ -429,7 +429,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
       AppCompatActivity appCompatActivity = getAppCompatActivity();
       if (appCompatActivity == null) {
-        promise.reject("result", "current activity is not an instance of AppCompatActivity");
+        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
         return;
       }
 
@@ -446,7 +446,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
         @Override
         public void error(TSPinCodeAuthenticationError error) {
-          promise.reject("result", error.toString());
+          TsErrorMapper.reject(promise, error);
         }
       });
     }
@@ -614,7 +614,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
             @Override
             public void error(TSDeviceInfoError tsDeviceInfoError) {
-              promise.reject("result", tsDeviceInfoError.toString());
+              TsErrorMapper.reject(promise, tsDeviceInfoError);
             }
           });
     }

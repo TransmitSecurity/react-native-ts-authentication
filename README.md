@@ -287,6 +287,55 @@ onIsWebAuthenSupported = async (): Promise<void> => {
 }
 ```
 
+## Error Handling
+
+All APIs reject with a stable `code` string that is identical on iOS and Android.
+
+```js
+try {
+    await TSAuthenticationSDKModule.authenticateWebAuthn(username);
+} catch (error) {
+    error.code     // stable identifier - branch on this
+    error.message  // diagnostic text - do not parse
+    error.userInfo?.asAuthorizationErrorCode  // iOS only: raw ASAuthorizationError code (e.g. 1001)
+}
+```
+
+| `code` | Meaning |
+| --- | --- |
+| `userCanceled` | User dismissed the passkey or biometric prompt |
+| `credentialNotAvailable` | No passkey/credential for this user on this device |
+| `authenticationFailed` | Credential was presented but rejected |
+| `webAuthnFailed` | Platform/WebAuthn layer failure |
+| `networkError` | Network or backend failure |
+| `invalidWebAuthnSession` | Session expired or invalid |
+| `invalidDomain` | Relying-party domain misconfigured |
+| `notInitialized` | SDK not initialized |
+| `unsupportedOSVersion` | Passkeys unsupported on this OS/device |
+| `requestIsRunning` | Another request already in flight |
+| `initializationError` | SDK failed to initialize |
+| `biometricsNotAvailable` | Native biometrics hardware unavailable or unsupported |
+| `biometricsNotEnrolled` | No biometrics enrolled on the device |
+| `biometricsNotRegistered` | No biometrics registration for this user |
+| `biometricsLockedOut` | Too many failed biometric attempts |
+| `biometricsPermissionDenied` | Biometrics permission denied |
+| `pinCodeNotRegistered` | No PIN registration for this user |
+| `pinCodeDuplicateCommit` | PIN registration already committed |
+| `totpError` | TOTP failure |
+| `invalidArgument` | Invalid parameters passed by the app |
+| `unknown` | Unmapped or internal error |
+
+`userCanceled` covers both the SDK cancel signal and Apple's `ASAuthorizationError` code `1001`, so a dismissed passkey sheet always yields `userCanceled`.
+
+```js
+catch (error) {
+    if (error.code === 'userCanceled') return;
+    showError(error.code === 'credentialNotAvailable'
+        ? 'Set up a passkey to continue.'
+        : 'Sign-in failed. Please try again.');
+}
+```
+
 ## Important Notes
 1. Please take note that the example application uses a client-side mock server. In a production environment, a real server is required. Additionally, it is crucial to emphasize that storing the client secret in your front-end application is strictly discouraged for security reasons.
 

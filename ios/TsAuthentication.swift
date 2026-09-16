@@ -3,7 +3,6 @@ import TSAuthenticationSDK
 @objc(TsAuthentication)
 class TsAuthentication: NSObject {
   
-  private let kTag = "TSAuthentication"
   private var contextStore: [String: AnyObject] = [:]
     
   // MARK: - SDK Init
@@ -17,7 +16,7 @@ class TsAuthentication: NSObject {
           resolve(true)
         } catch {
           logger.log("Finished initializeSDK with error: \(error)")
-          reject(self.kTag, nil, error)
+          self.rejectWith(reject, error)
         }
       }
     }
@@ -30,7 +29,7 @@ class TsAuthentication: NSObject {
     resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
       
       guard !clientId.isEmpty, !baseUrl.isEmpty else {
-        reject("Invalid params provided to .initialize", nil, nil)
+        reject(TSErrorCode.invalidArgument.rawValue, "Invalid params provided to .initialize", nil)
         return
       }
       
@@ -70,7 +69,7 @@ class TsAuthentication: NSObject {
               resolve(["result": response.result])
             case .failure(let error):
               logger.log("Finished native registration with error: \(error)")
-              reject(self.kTag, error.localizedDescription, error)
+              self.rejectWith(reject, error)
             }
           }
       }
@@ -89,7 +88,7 @@ class TsAuthentication: NSObject {
           case .success(let response):
             resolve(["result": response.result])
           case .failure(let error):
-            reject(self.kTag, error.localizedDescription, error)
+            self.rejectWith(reject, error)
           }
         }
       }
@@ -110,7 +109,7 @@ class TsAuthentication: NSObject {
           case .success(let response):
             resolve(["result": response.result])
           case .failure(let error):
-            reject(self.kTag, error.localizedDescription, error)
+            self.rejectWith(reject, error)
           }
         }
       }
@@ -138,7 +137,7 @@ class TsAuthentication: NSObject {
               "keyType": response.keyType
             ])
           case .failure(let error):
-            reject(self.kTag, error.localizedDescription, error)
+            self.rejectWith(reject, error)
           }
         }
       }
@@ -165,9 +164,7 @@ class TsAuthentication: NSObject {
               "signature": signature
             ])
           case .failure(let error):
-            if case .nativeBiometricsError(let nativeBiometricsError) = error {
-              reject(self.kTag, error.localizedDescription, nativeBiometricsError)
-            }
+            self.rejectWith(reject, error)
           }
         }
       }
@@ -194,7 +191,7 @@ class TsAuthentication: NSObject {
             "result": result.result
           ])
         case .failure(let error):
-          reject(self.kTag, error.localizedDescription, error)
+          self.rejectWith(reject, error)
         }
       }
     }
@@ -208,7 +205,7 @@ class TsAuthentication: NSObject {
     reject: @escaping RCTPromiseRejectBlock
   ) {
     guard let authenticationData = convertWebAuthnAuthenticationData(rawAuthenticationData) else {
-      reject(kTag, "Invalid rawAuthenticationData", nil)
+      reject(TSErrorCode.invalidArgument.rawValue, "Invalid rawAuthenticationData", nil)
       return
     }
     
@@ -222,7 +219,7 @@ class TsAuthentication: NSObject {
             "result": results.result
           ])
         case .failure(let error):
-          reject(self.kTag, error.localizedDescription, error)
+          self.rejectWith(reject, error)
         }
       }
     }
@@ -246,7 +243,7 @@ class TsAuthentication: NSObject {
             "signature": results.signature
           ])
         case .failure(let error):
-          reject(self.kTag, error.localizedDescription, error)
+          self.rejectWith(reject, error)
         }
       }
     }
@@ -332,7 +329,7 @@ class TsAuthentication: NSObject {
           ])
           
         case .failure(let error):
-          reject(self.kTag, error.localizedDescription, error)
+          self.rejectWith(reject, error)
         }
       }
     }
@@ -345,7 +342,7 @@ class TsAuthentication: NSObject {
     reject: @escaping RCTPromiseRejectBlock
   ) {
     guard !contextIdentifier.isEmpty, var pinRegistrationContext = getContextWithIdentifier(contextIdentifier) as? TSAuthenticationSDK.TSRegistrationContext else {
-      reject(self.kTag, "Invalid context identifier", nil)
+      reject(TSErrorCode.invalidArgument.rawValue, "Invalid context identifier", nil)
       return
     }
     
@@ -355,7 +352,7 @@ class TsAuthentication: NSObject {
       try pinRegistrationContext.commit()
       resolve(true)
     } catch {
-      reject(self.kTag, error.localizedDescription, error)
+      self.rejectWith(reject, error)
     }
   }
   
@@ -383,7 +380,7 @@ class TsAuthentication: NSObject {
             "challenge": response.challenge
           ])
         case .failure(let error):
-          reject(self.kTag, error.localizedDescription, error)
+          self.rejectWith(reject, error)
         }
       }
     }
@@ -407,7 +404,7 @@ class TsAuthentication: NSObject {
             ]
             resolve(info)
           case .failure(let error):
-            reject(self.kTag, error.localizedDescription, error)
+            self.rejectWith(reject, error)
           }
         }
       }
@@ -440,6 +437,11 @@ class TsAuthentication: NSObject {
   
   private func getContextWithIdentifier(_ identifier: String) -> AnyObject? {
     return contextStore[identifier] as AnyObject?
+  }
+  
+  private func rejectWith(_ reject: RCTPromiseRejectBlock, _ error: Error) {
+    let rejection = tsRejection(error)
+    reject(rejection.code, rejection.message, rejection.error)
   }
   
   // MARK: - Threading

@@ -386,7 +386,9 @@ export default class App extends React.Component<any, State> {
     }
 
     await TSAuthenticationSDKModule.initialize(
-      appConfiguration.clientId
+      appConfiguration.clientId,
+      null,
+      appConfiguration.baseUrl
     );
 
     const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();

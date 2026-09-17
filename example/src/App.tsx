@@ -111,7 +111,8 @@ export default class App extends React.Component<any, State> {
         this.setState({ errorMessage: 'Sign Transaction failed' });
       }
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('signTransaction', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -149,7 +150,8 @@ export default class App extends React.Component<any, State> {
         this.setState({ errorMessage: 'Registration failed' });
       }
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('registerNativeBiometics', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -168,7 +170,8 @@ export default class App extends React.Component<any, State> {
         this.setState({ errorMessage: 'Authentication failed' });
       }
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('authenticateWithNativeBiometrics', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -192,7 +195,8 @@ export default class App extends React.Component<any, State> {
         await this.registerWebAuthn(username, displayName);
       }
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('onStartAuthentication', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -201,6 +205,7 @@ export default class App extends React.Component<any, State> {
   private registerWebAuthn = async (username: string, displayName: string): Promise<void> => {
     this.setState({ loading: true });
     try {
+
       const response = await TSAuthenticationSDKModule.registerWebAuthn(username, displayName);
       const accessToken = await this.mockServer.getAccessToken();
       const success = await this.mockServer.completeRegistration(accessToken.token, response.result, username);
@@ -211,7 +216,9 @@ export default class App extends React.Component<any, State> {
         this.setState({ errorMessage: 'Registration failed' });
       }
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('registerWebAuthn', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
+
     } finally {
       this.setState({ loading: false });
     }
@@ -229,7 +236,8 @@ export default class App extends React.Component<any, State> {
         this.setState({ errorMessage: 'Authentication failed' });
       }
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('authenticateWithWebAuthn', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -251,7 +259,8 @@ export default class App extends React.Component<any, State> {
       const result = await TSAuthenticationSDKModule.approvalWebAuthn(username, approvalData, []);
       Alert.alert("Approval result: ", JSON.stringify(result));
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('approvalWebAuthn', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -273,7 +282,8 @@ export default class App extends React.Component<any, State> {
       const result = await TSAuthenticationSDKModule.approvalWebAuthnWithData(rawAuthenticationData, []);
       Alert.alert("Approval result: ", JSON.stringify(result));
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('approvalWebAuthnWithData', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -290,8 +300,9 @@ export default class App extends React.Component<any, State> {
     try {
       const result = await TSAuthenticationSDKModule.approvalNativeBiometrics(username, "challenge");
       Alert.alert("Approval result: ", JSON.stringify(result));
-    }  catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+    } catch (error: any) {
+      this.logSdkError('onApprovalNativeBiometrics', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
     } finally {
       this.setState({ loading: false });
     }
@@ -316,7 +327,8 @@ export default class App extends React.Component<any, State> {
       Alert.alert("PIN Code Registration", "PIN code registered successfully");
       return true;
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('onRegisterPINCode', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
       return false;
     } finally {
       this.setState({ loading: false });
@@ -336,7 +348,8 @@ export default class App extends React.Component<any, State> {
       Alert.alert("Authentication result: ", JSON.stringify(result));
       return true;
     } catch (error: any) {
-      this.setState({ errorMessage: `${error}` });
+      this.logSdkError('onAuthenticatePinCode', error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
       return false;
     } finally {
       this.setState({ loading: false });
@@ -355,6 +368,10 @@ export default class App extends React.Component<any, State> {
 
   private onLogout = (): void => {
     this.setState({ currentScreen: AppScreen.Home, username: "" });
+  }
+
+  private logSdkError = (context: string, error: any): void => {
+    console.log(`[${context}] code=${error?.code} message=${error?.message} userInfo=${JSON.stringify(error?.userInfo)}`);
   }
 
   // App Configuration

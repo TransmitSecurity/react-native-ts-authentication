@@ -1,5 +1,6 @@
 import Foundation
 import AuthenticationServices
+import TSCoreSDK
 import TSAuthenticationSDK
 
 enum TSErrorCode: String {
@@ -31,7 +32,13 @@ struct TSRejection {
     let message: String
     let error: NSError
 
-    init(_ code: TSErrorCode, _ message: String, asAuthorizationErrorCode: Int? = nil) {
+    init(
+        _ code: TSErrorCode,
+        _ message: String,
+        asAuthorizationErrorCode: Int? = nil,
+        httpStatusCode: Int? = nil,
+        serverMessage: String? = nil
+    ) {
         self.code = code.rawValue
         self.message = message
 
@@ -41,6 +48,12 @@ struct TSRejection {
         ]
         if let asAuthorizationErrorCode = asAuthorizationErrorCode {
             userInfo["asAuthorizationErrorCode"] = asAuthorizationErrorCode
+        }
+        if let httpStatusCode = httpStatusCode {
+            userInfo["httpStatusCode"] = httpStatusCode
+        }
+        if let serverMessage = serverMessage {
+            userInfo["serverMessage"] = serverMessage
         }
         self.error = NSError(domain: "TSAuthentication", code: 0, userInfo: userInfo)
     }
@@ -67,13 +80,13 @@ func tsRejection(_ error: Error) -> TSRejection {
     case .webAuthnError(let webAuthnError):
         return tsWebAuthnRejection(webAuthnError, message)
     case .nativeBiometricsError(let biometricsError):
-        return TSRejection(tsBiometricsCode(biometricsError), message)
+        return tsBiometricsRejection(biometricsError, message)
     case .pinCodeError(let pinCodeError):
-        return TSRejection(tsPinCodeCode(pinCodeError), message)
+        return tsPinCodeRejection(pinCodeError, message)
     case .totpError:
         return TSRejection(.totpError, message)
-    case .internal:
-        return TSRejection(.unknown, message)
+    case .internal(let underlying):
+        return tsInternalRejection(underlying, message)
     @unknown default:
         return TSRejection(.unknown, message)
     }
@@ -93,43 +106,72 @@ private func tsWebAuthnRejection(_ error: TSWebAuthnError, _ message: String) ->
         return TSRejection(asError?.code == .canceled ? .userCanceled : .authenticationFailed, message, asAuthorizationErrorCode: asError?.code.rawValue)
     case .invalidResponse(let asError), .notHandled(let asError), .notInteractive(let asError):
         return TSRejection(asError?.code == .canceled ? .userCanceled : .webAuthnFailed, message, asAuthorizationErrorCode: asError?.code.rawValue)
-    case .internal:
-        return TSRejection(.unknown, message)
+    case .internal(let underlying):
+        return tsInternalRejection(underlying, message)
     @unknown default:
         return TSRejection(.unknown, message)
     }
 }
 
-private func tsBiometricsCode(_ error: TSNativeBiometricsError) -> TSErrorCode {
+private func tsBiometricsRejection(_ error: TSNativeBiometricsError, _ message: String) -> TSRejection {
     switch error {
     case .nativeBiometricsNotAvailable:
-        return .biometricsNotAvailable
+        return TSRejection(.biometricsNotAvailable, message)
     case .nativeBiometricsNotEnrolled:
-        return .biometricsNotEnrolled
+        return TSRejection(.biometricsNotEnrolled, message)
     case .notRegistered:
-        return .biometricsNotRegistered
+        return TSRejection(.biometricsNotRegistered, message)
     case .canceled, .userCanceled:
-        return .userCanceled
+        return TSRejection(.userCanceled, message)
     case .failure:
-        return .authenticationFailed
+        return TSRejection(.authenticationFailed, message)
     case .lockedOut:
-        return .biometricsLockedOut
+        return TSRejection(.biometricsLockedOut, message)
     case .permissionDenied:
-        return .biometricsPermissionDenied
-    case .internal:
-        return .unknown
+        return TSRejection(.biometricsPermissionDenied, message)
+    case .internal(let underlying):
+        return tsInternalRejection(underlying, message)
     @unknown default:
-        return .unknown
+        return TSRejection(.unknown, message)
     }
 }
 
-private func tsPinCodeCode(_ error: TSPinCodeError) -> TSErrorCode {
+private func tsPinCodeRejection(_ error: TSPinCodeError, _ message: String) -> TSRejection {
     switch error {
     case .notRegistered:
-        return .pinCodeNotRegistered
+        return TSRejection(.pinCodeNotRegistered, message)
     case .duplicateCommitRegistration:
-        return .pinCodeDuplicateCommit
-    case .internal:
+        return TSRejection(.pinCodeDuplicateCommit, message)
+    case .internal(let underlying):
+        return tsInternalRejection(underlying, message)
+    @unknown default:
+        return TSRejection(.unknown, message)
+    }
+}
+
+private func tsInternalRejection(_ underlying: Error?, _ message: String) -> TSRejection {
+    guard let requestError = underlying as? TSRequestError else {
+        return TSRejection(.unknown, message)
+    }
+
+    var httpStatusCode: Int?
+    if case .requestError(let errorCode) = requestError.errorCode {
+        httpStatusCode = errorCode
+    }
+
+    return TSRejection(
+        tsRequestCode(requestError.errorCode),
+        message,
+        httpStatusCode: httpStatusCode,
+        serverMessage: requestError.errorMessage
+    )
+}
+
+private func tsRequestCode(_ code: TSRequestErrorCode) -> TSErrorCode {
+    switch code {
+    case .noInternet, .noResponse, .invalidURL, .unauthorized, .unexpectedStatusCode, .forbiddenUrl, .requestError:
+        return .networkError
+    case .invalidResponse, .decodingError, .encodingError, .encriptionError, .unknown:
         return .unknown
     @unknown default:
         return .unknown

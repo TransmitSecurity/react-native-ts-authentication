@@ -4,6 +4,7 @@
 1. Upgraded native SDKs to iOS `1.2.1` and Android `1.0.30`.
 2. All APIs now reject with a stable `code` string that is identical on iOS and Android.
 3. iOS errors now expose the underlying Apple error via `error.userInfo.asAuthorizationErrorCode`, so a dismissed passkey sheet (`ASAuthorizationError` `1001`) is reported as `userCanceled`.
+4. Backend failures on iOS are now reported as `networkError` with `error.userInfo.httpStatusCode` and `error.userInfo.serverMessage`, instead of being swallowed as a generic internal error.
 
 #### Bug Fixes
 1. Fixed `authenticateNativeBiometrics` on iOS never settling its promise when the failure was not a native biometrics error.

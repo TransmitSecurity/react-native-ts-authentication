@@ -298,6 +298,8 @@ try {
     error.code     // stable identifier - branch on this
     error.message  // diagnostic text - do not parse
     error.userInfo?.asAuthorizationErrorCode  // iOS only: raw ASAuthorizationError code (e.g. 1001)
+    error.userInfo?.httpStatusCode            // iOS only: HTTP status when the backend rejected the request
+    error.userInfo?.serverMessage             // iOS only: raw response body from the backend
 }
 ```
 
@@ -326,6 +328,8 @@ try {
 | `unknown` | Unmapped or internal error |
 
 `userCanceled` covers both the SDK cancel signal and Apple's `ASAuthorizationError` code `1001`, so a dismissed passkey sheet always yields `userCanceled`.
+
+When the backend rejects a request, the code is `networkError` and `userInfo.httpStatusCode` / `userInfo.serverMessage` carry the status and response body. This distinguishes a tenant misconfiguration (for example `400` with `invalid_webauthn_config`) from a genuine loss of connectivity.
 
 ```js
 catch (error) {

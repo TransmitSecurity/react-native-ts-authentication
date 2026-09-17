@@ -87,6 +87,8 @@ export namespace TSAuthenticationSDK {
     userInfo?: {
       code: TSAuthenticationErrorCode;
       asAuthorizationErrorCode?: number;
+      httpStatusCode?: number;
+      serverMessage?: string;
     };
   }
 

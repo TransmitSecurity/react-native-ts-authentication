@@ -58,17 +58,38 @@ export namespace TSAuthenticationSDK {
     publicKey: string;
   }
 
-  export const enum TSAuthenticationError {
-    notInitialized,
-    userNotFound,
-    requestIsRunning,
-    registrationFailed,
-    authenticationFailed,
-    invalidWebAuthnSession,
-    genericServerError,
-    networkError,
-    passkeyError,
-    unknown
+  export type TSAuthenticationErrorCode =
+    | 'userCanceled'
+    | 'credentialNotAvailable'
+    | 'authenticationFailed'
+    | 'webAuthnFailed'
+    | 'invalidWebAuthnSession'
+    | 'invalidDomain'
+    | 'networkError'
+    | 'notInitialized'
+    | 'unsupportedOSVersion'
+    | 'requestIsRunning'
+    | 'initializationError'
+    | 'biometricsNotAvailable'
+    | 'biometricsNotEnrolled'
+    | 'biometricsNotRegistered'
+    | 'biometricsLockedOut'
+    | 'biometricsPermissionDenied'
+    | 'pinCodeNotRegistered'
+    | 'pinCodeDuplicateCommit'
+    | 'totpError'
+    | 'invalidArgument'
+    | 'unknown';
+
+  export interface TSAuthenticationError {
+    code: TSAuthenticationErrorCode;
+    message: string;
+    userInfo?: {
+      code: TSAuthenticationErrorCode;
+      asAuthorizationErrorCode?: number;
+      httpStatusCode?: number;
+      serverMessage?: string;
+    };
   }
 
   export interface ApprovalResults {

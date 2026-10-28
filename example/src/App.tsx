@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Alert, SafeAreaView, View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import TSAuthenticationSDKModule, { TSAuthenticationSDK } from 'react-native-ts-authentication';
-import HomeScreen from './home';
+import HomeScreen, { type MoreAction } from './home';
 import config from './config';
 import localUserStore from './utils/local-user-store';
 import MockServer from './utils/mock_server';
@@ -17,7 +17,10 @@ export type State = {
   currentScreen: string,
   username: string,
   isNewlyRegistered: boolean,
-  loading: boolean
+  loading: boolean,
+  homeKey: number,
+  totpUUID: string | null,
+  loggingEnabled: boolean
 };
 
 export type ExampleAppConfiguration = {
@@ -37,7 +40,10 @@ export default class App extends React.Component<any, State> {
       currentScreen: AppScreen.Home,
       username: "",
       isNewlyRegistered: false,
-      loading: false
+      loading: false,
+      homeKey: 0,
+      totpUUID: null,
+      loggingEnabled: false
     };
   }
 
@@ -51,6 +57,7 @@ export default class App extends React.Component<any, State> {
         <View style={{ flex: 1 }}>
           {this.state.currentScreen === AppScreen.Home ? (
             <HomeScreen 
+              key={this.state.homeKey}
               onStartAuthentication={this.onStartAuthentication}
               onStartNativeBiometrics={this.onStartNativeBiometrics}
               onApprovalWebAuthn={this.onApprovalWebAuthn}
@@ -58,6 +65,7 @@ export default class App extends React.Component<any, State> {
               onApprovalNativeBiometrics={this.onApprovalNativeBiometrics}
               onRegisterPINCode={this.onRegisterPINCode}
               onAuthenticatePinCode={this.onAuthenticatePinCode}
+              moreActions={this.moreActions()}
               errorMessage={this.state.errorMessage}
             />
           ) : (
@@ -98,6 +106,8 @@ export default class App extends React.Component<any, State> {
     }
   }
 
+  // Signs with the username only. To approve a transaction with approval data (amount, payee, ...),
+  // use approvalWebAuthn — see "Approval WebAuthn" on the home screen.
   private signTransaction = async (username: string): Promise<void> => {
     this.setState({ loading: true });
     try {
@@ -356,6 +366,129 @@ export default class App extends React.Component<any, State> {
     }
   }
 
+  // More APIs
+
+  private moreActions = (): MoreAction[] => [
+    { title: 'Initialize from config file', onPress: () => this.runAndShow('initializeSDK', () => TSAuthenticationSDKModule.initializeSDK()) },
+    { title: `Turn SDK logging ${this.state.loggingEnabled ? 'off' : 'on'}`, onPress: this.onToggleLogging },
+    { title: 'Biometrics status', onPress: this.onBiometricsStatus },
+    { title: 'Unregister Native Biometrics', onPress: (username) => this.withUsername(username, () =>
+        this.runAndShow('unregisterNativeBiometrics', () => TSAuthenticationSDKModule.unregisterNativeBiometrics(username))) },
+    { title: 'Unregister PIN', onPress: this.onUnregisterPinCode },
+    { title: 'Sign with Device Key', onPress: () =>
+        this.runAndShow('signWithDeviceKey', () => TSAuthenticationSDKModule.signWithDeviceKey(this.randomString())) },
+    { title: 'Register TOTP', onPress: this.onRegisterTOTP },
+    { title: 'Generate TOTP Code', onPress: () => this.withTOTP((uuid) =>
+        this.runAndShow('generateTOTPCode', () => TSAuthenticationSDKModule.generateTOTPCode(uuid))) },
+    { title: 'Generate TOTP Code with Challenge', onPress: () => this.withTOTP((uuid) =>
+        this.runAndShow('generateTOTPCodeWithChallenge', () => TSAuthenticationSDKModule.generateTOTPCodeWithChallenge(uuid, this.randomString()))) },
+    { title: 'Register WebAuthn With Data', onPress: (username) => this.withUsername(username, () =>
+        this.runAndShow('registerWebAuthnWithData', () => TSAuthenticationSDKModule.registerWebAuthnWithData(this.mockRegistrationData(username)))) },
+    { title: 'Authenticate WebAuthn With Data', onPress: (username) => this.withUsername(username, () =>
+        this.runAndShow('authenticateWebAuthnWithData', () => TSAuthenticationSDKModule.authenticateWebAuthnWithData(this.mockAuthenticationData(username)))) },
+    { title: 'Sign Transaction With Data', onPress: (username) => this.withUsername(username, () =>
+        this.runAndShow('signWebauthnTransactionWithData', () => TSAuthenticationSDKModule.signWebauthnTransactionWithData(this.mockAuthenticationData(username)))) },
+  ];
+
+  private runAndShow = async (name: string, call: () => Promise<unknown>): Promise<unknown> => {
+    this.setState({ loading: true, errorMessage: '' });
+    try {
+      const result = await call();
+      Alert.alert(name, JSON.stringify(result ?? null));
+      return result;
+    } catch (error: any) {
+      this.logSdkError(name, error);
+      this.setState({ errorMessage: `${error?.code}: ${error?.message}` });
+      return undefined;
+    } finally {
+      this.setState({ loading: false });
+    }
+  }
+
+  private withUsername = (username: string, action: () => void): void => {
+    if (username === '') {
+      this.setState({ errorMessage: 'Please enter a username' });
+      return;
+    }
+    action();
+  }
+
+  private withTOTP = (action: (uuid: string) => void): void => {
+    if (!this.state.totpUUID) {
+      this.setState({ errorMessage: 'Register TOTP first' });
+      return;
+    }
+    action(this.state.totpUUID);
+  }
+
+  private onToggleLogging = async (): Promise<void> => {
+    const enabled = !this.state.loggingEnabled;
+    await TSAuthenticationSDKModule.setLoggingEnabled(enabled);
+    this.setState({ loggingEnabled: enabled });
+  }
+
+  private onBiometricsStatus = (): void => {
+    this.runAndShow('biometrics', async () => ({
+      isEnrolled: await TSAuthenticationSDKModule.isNativeBiometricsEnrolled(),
+      status: await TSAuthenticationSDKModule.getNativeBiometricsStatus(),
+      type: await TSAuthenticationSDKModule.getNativeBiometricsType(),
+    }));
+  }
+
+  private onUnregisterPinCode = (rawUsername: string): void => {
+    this.withUsername(rawUsername, async () => {
+      const username = rawUsername.toLowerCase();
+      const result = await this.runAndShow('unregisterPinCode', () => TSAuthenticationSDKModule.unregisterPinCode(username)) as
+        TSAuthenticationSDK.TSPinCodeUnregistrationCompletion | undefined;
+      if (!result) return;
+      // Tell your server the PIN authenticator was removed, then commit locally.
+      await this.runAndShow('commitPinUnregistration', () => TSAuthenticationSDKModule.commitPinUnregistration(result.contextIdentifier));
+      localUserStore.setHasRegisteredPIN(username, false);
+      this.setState({ homeKey: this.state.homeKey + 1 });
+    });
+  }
+
+  private onRegisterTOTP = (username: string): void => {
+    const securityTypes: TSAuthenticationSDK.TOTPSecurityType[] = ['none', 'biometric', 'devicePin', 'devicePinOrBiometric'];
+    Alert.alert('TOTP security type', undefined, [
+      ...securityTypes.map((securityType) => ({
+        text: securityType,
+        onPress: async () => {
+          // A sample authenticator URI; a real one comes from your TOTP registration flow.
+          const uri = `otpauth://totp/Example:${encodeURIComponent(username || 'user')}?secret=JBSWY3DPEHPK3PXP&issuer=Example`;
+          const result = await this.runAndShow('registerTOTP', () => TSAuthenticationSDKModule.registerTOTP(uri, securityType)) as
+            TSAuthenticationSDK.TSTOTPRegistrationResult | undefined;
+          if (result) this.setState({ totpUUID: result.uuid });
+        },
+      })),
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
+
+  // Mock payloads in the server format. They exercise the bridge; the server rejects them.
+  private mockRegistrationData = (username: string) => ({
+    webauthn_session_id: 'some-web-authn-session-id',
+    credential_creation_options: {
+      challenge: 'some-challenge-string',
+      rp: { id: 'mock-rp-id', name: 'Mock RP' },
+      user: { id: username, name: username, displayName: username },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+      authenticatorSelection: { userVerification: 'preferred' },
+      attestation: 'direct',
+    },
+  });
+
+  private mockAuthenticationData = (username: string): TSAuthenticationSDK.WebAuthnAuthenticationData => ({
+    webauthnSessionId: 'some-web-authn-session-id',
+    credentialRequestOptions: {
+      challenge: 'some-challenge-string',
+      allowCredentials: null,
+      userVerification: 'preferred',
+      rpId: 'mock-rp-id',
+      userData: { id: username, name: username, displayName: username },
+    },
+  });
+
   // Navigation
 
   private navigateToAuthenticatedUserScreen = (username: string, isNewRegistration: boolean): void => {
@@ -405,7 +538,8 @@ export default class App extends React.Component<any, State> {
     await TSAuthenticationSDKModule.initialize(
       appConfiguration.clientId,
       null,
-      appConfiguration.baseUrl
+      appConfiguration.baseUrl,
+      config.webAuthnApiPaths ? { webAuthnApiPaths: config.webAuthnApiPaths } : null
     );
 
     const deviceInfo = await TSAuthenticationSDKModule.getDeviceInfo();

@@ -6,7 +6,7 @@
  */
 
 import React, { type ReactElement } from 'react';
-import { View, StyleSheet, Text, TextInput, Alert, TouchableOpacity, Keyboard, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Alert, TouchableOpacity, Keyboard, Modal, Pressable, ScrollView } from 'react-native';
 import type { TSAuthenticationSDK } from 'react-native-ts-authentication';
 import localUserStore from './utils/local-user-store';
 
@@ -18,7 +18,13 @@ export type Props = {
     onApprovalNativeBiometrics: (username: string) => void;
     onRegisterPINCode: (username: string, pinCode: string) => Promise<boolean>;
     onAuthenticatePinCode: (username: string, pinCode: string) => Promise<boolean>;
+    moreActions: MoreAction[];
     errorMessage: string;
+};
+
+export type MoreAction = {
+    title: string;
+    onPress: (username: string) => void;
 };
 
 const enum PinAuthenticatorMode {
@@ -54,9 +60,10 @@ export default class HomeScreen extends React.Component<Props, State> {
 
     render() {
         return (
-            <View style={styles.container}>
+            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
                 <View style={styles.card}>
                     {this.renderUsernameInputField()}
+                    {this.renderStatusLabel()}
                     <View style={styles.buttonGroup}>
                         {this.renderStartAuthenticationButton()}
                         {this.renderNativeBiometricsButton()}
@@ -65,9 +72,9 @@ export default class HomeScreen extends React.Component<Props, State> {
                         {this.renderApprovalNativeBiometricsButton()}
                         {this.renderPINButton()}
                     </View>
-                    {this.renderStatusLabel()}
+                    {this.renderMoreActions()}
                 </View>
-            </View>
+            </ScrollView>
         );
     }
 
@@ -85,6 +92,19 @@ export default class HomeScreen extends React.Component<Props, State> {
                 />
             </View>
         )
+    }
+
+    private renderMoreActions(): ReactElement {
+        return (
+            <View style={styles.buttonGroup}>
+                <Text style={styles.inputLabel}>More APIs</Text>
+                {this.props.moreActions.map((action) => (
+                    <View key={action.title}>
+                        {this.renderButton(action.title, () => action.onPress(this.state.username))}
+                    </View>
+                ))}
+            </View>
+        );
     }
 
     private renderStatusLabel(): ReactElement {
@@ -306,7 +326,7 @@ export default class HomeScreen extends React.Component<Props, State> {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'flex-start', // align card to top
         alignItems: 'center',
         backgroundColor: '#f5f6fa',

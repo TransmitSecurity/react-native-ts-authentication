@@ -8,4 +8,8 @@
     <string name="BiometricPromptTitle">Authenticate with Biometrics</string>
     <string name="BiometricPromptSubtitle">Use your device biometrics to authenticate.</string>
     <string name="BiometricPromptCancel">Cancel</string>
+    <!-- Read by initializeSDK ("Initialize from config file"); initialize() uses src/config.ts instead -->
+    <string name="transmit_security_app_id">default_application</string>
+    <string name="transmit_security_client_id">REPLACE_WITH_CLIENT_ID</string>
+    <string name="transmit_security_base_url">https://api.transmitsecurity.io</string>
 </resources>

@@ -15,6 +15,7 @@
 		6FA9F883B43B7CE0344B3A15 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2670ED841E98FB75A9F42FE9 /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8669DDEB2D67748E5803D5C8 /* libPods-TsAuthenticationExample-TsAuthenticationExampleTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ED5DC0A2637A31DE4ADC83A1 /* libPods-TsAuthenticationExample-TsAuthenticationExampleTests.a */; };
+		A6EE411E0CE4441968519A30 /* TransmitSecurity.plist in Resources */ = {isa = PBXBuildFile; fileRef = BA6F59BEA81E05574BA24D78 /* TransmitSecurity.plist */; };
 		E8191385399F7901DE9AE1A8 /* libPods-TsAuthenticationExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D64E6F22D72FE5E910ECFA28 /* libPods-TsAuthenticationExample.a */; };
 /* End PBXBuildFile section */
 
@@ -45,6 +46,7 @@
 		657C8A232B20EAEF00A067BB /* TsAuthenticationExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = TsAuthenticationExample.entitlements; path = TsAuthenticationExample/TsAuthenticationExample.entitlements; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = TsAuthenticationExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B6A7EE7483F63AF4DE5A01FC /* Pods-TsAuthenticationExample-TsAuthenticationExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TsAuthenticationExample-TsAuthenticationExampleTests.release.xcconfig"; path = "Target Support Files/Pods-TsAuthenticationExample-TsAuthenticationExampleTests/Pods-TsAuthenticationExample-TsAuthenticationExampleTests.release.xcconfig"; sourceTree = "<group>"; };
+		BA6F59BEA81E05574BA24D78 /* TransmitSecurity.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = TransmitSecurity.plist; path = TsAuthenticationExample/TransmitSecurity.plist; sourceTree = "<group>"; };
 		D30423ABA42E68A7C6241AC7 /* Pods-TsAuthenticationExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TsAuthenticationExample.release.xcconfig"; path = "Target Support Files/Pods-TsAuthenticationExample/Pods-TsAuthenticationExample.release.xcconfig"; sourceTree = "<group>"; };
 		D64E6F22D72FE5E910ECFA28 /* libPods-TsAuthenticationExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TsAuthenticationExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -100,6 +102,7 @@
 				6538E3942DE5C5BF00E116EE /* TransmitIcon.png */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				2670ED841E98FB75A9F42FE9 /* PrivacyInfo.xcprivacy */,
+				BA6F59BEA81E05574BA24D78 /* TransmitSecurity.plist */,
 			);
 			name = TsAuthenticationExample;
 			sourceTree = "<group>";
@@ -254,6 +257,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				6538E3952DE5C5BF00E116EE /* TransmitIcon.png in Resources */,
 				6FA9F883B43B7CE0344B3A15 /* PrivacyInfo.xcprivacy in Resources */,
+				A6EE411E0CE4441968519A30 /* TransmitSecurity.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

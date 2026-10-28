@@ -1,3 +1,27 @@
+## 0.2.0 October 2026
+### Content
+#### Enhancements
+1. Upgraded the Android native SDK to `1.0.32` (core SDK `1.1.2`). Android apps now need `compileSdkVersion` 33 or higher. The iOS native SDK stays at `1.2.1`.
+2. Added `signWithDeviceKey` to sign a challenge with the device key.
+3. Added `isNativeBiometricsEnrolled`, `getNativeBiometricsStatus` and `getNativeBiometricsType`.
+4. Added `unregisterNativeBiometrics`, and `unregisterPinCode` with `commitPinUnregistration`.
+5. Added TOTP: `registerTOTP`, `generateTOTPCode` and `generateTOTPCodeWithChallenge`.
+6. Added `registerWebAuthnWithData`, `authenticateWebAuthnWithData` and `signWebauthnTransactionWithData`, for WebAuthn data your backend has already started.
+7. `initialize` takes optional init options with custom WebAuthn API paths.
+8. `initializeSDK` takes an optional configuration file name (iOS only).
+9. `authenticateWebAuthn` and `signWebauthnTransaction` take optional WebAuthn options (applied on iOS).
+10. Added `setLoggingEnabled`.
+11. Documented `approvalWebAuthn` as the API for approving a transaction with approval data.
+
+#### Bug Fixes
+1. Android: `initialize` ignored the `baseUrl` and `domain` arguments and always used the default base URL.
+2. Android: `signWebauthnTransaction` failed because the native method was exported under a different name.
+3. Android: `initializeSDK` now resolves, and rejects with `initializationError` when the configuration is missing, instead of throwing.
+4. Android: APIs that need a foreground Activity now reject with the new `activityNotAvailable` code instead of never settling.
+5. Android: PIN code APIs no longer require an `AppCompatActivity`.
+6. Android: building an app with the New Architecture from a local checkout of this package no longer adds duplicate React Native classes.
+7. iOS: plugin log messages are printed correctly.
+
 ## 0.1.9 September 2026
 ### Content
 #### Enhancements

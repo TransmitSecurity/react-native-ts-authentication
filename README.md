@@ -58,6 +58,8 @@ repositories {
   }
 }
 ```
+The Android SDK requires `compileSdkVersion` 33 or higher in your app.
+
 #### Note:  
 As for projects on Gradle 8+ and Kotlin 1.8+ build will fail if the JDK version between compileKotlin and compileJava and jvmTarget are not aligned.
 <br> 
@@ -109,19 +111,29 @@ componentDidMount(): void {
 }
 
 private onAppReady = async (): Promise<void> => {
-    TSAuthenticationSDKModule.initializeSDK();
+    await TSAuthenticationSDKModule.initializeSDK();
+    // iOS only: pass a plist name to read a file other than TransmitSecurity.plist, e.g. initializeSDK("MyConfig")
     
     /* 
         Instead of using Plist and strings.xml, you can initialize the module with parameters: 
             1. ClientID obtained from the application settings in the Transmit portal
             2. Custom Domain - Can be null (or undefined if not using BaseURL)
             3. BaseURL - Can be null or undefined. "https://api.transmitsecurity.io" | eu = "api.eu.transmitsecurity.io" | ca = "api.ca.transmitsecurity.io"
+            4. Init options - Optional. Custom WebAuthn API paths for your backend:
+               { webAuthnApiPaths: { startRegistration: "/path/to/start-registration", startAuthentication: "/path/to/start-authentication" } }
 
-        TSAuthenticationSDKModule.initialize(
+        await TSAuthenticationSDKModule.initialize(
             "YOUR_CLIENT_ID"
         );
     */
 }
+```
+
+`initializeSDK` and `initialize` reject with `initializationError` or `invalidArgument` when the configuration is missing or invalid.
+
+#### SDK logging
+```js
+await TSAuthenticationSDKModule.setLoggingEnabled(true);
 ```
 
 #### First time authentication (Register a user)
@@ -149,6 +161,7 @@ onStartAuthenticationProcess = async (): Promise<void> => {
 ```
 
 #### Sign a transaction
+`signWebauthnTransaction` signs with the username only. To approve a transaction with approval data (for example an amount and a payee), use [`approvalWebAuthn`](#approval-with-webauthn).
 ```js
 onStartSignTransactionProcess = async (): Promise<void> => {
     try {
@@ -158,6 +171,19 @@ onStartSignTransactionProcess = async (): Promise<void> => {
         console.error(`Error signing a transaction: ${error}`);
     }
 }
+```
+
+`authenticateWebAuthn` and `signWebauthnTransaction` take an optional second argument, `options` (for example `[TSAuthenticationSDK.WebAuthnAuthenticationOptions.preferLocalCredantials]`). Options apply on iOS and are ignored on Android.
+
+#### WebAuthn with data from your backend
+When your backend has already started the WebAuthn ceremony, pass its data to the SDK instead of a username.
+```js
+// The registration data as returned by the server (webauthn_session_id, credential_creation_options)
+const registration = await TSAuthenticationSDKModule.registerWebAuthnWithData(rawRegistrationData);
+
+// TSAuthenticationSDK.WebAuthnAuthenticationData, the same shape approvalWebAuthnWithData takes
+const authentication = await TSAuthenticationSDKModule.authenticateWebAuthnWithData(rawAuthenticationData);
+const signature = await TSAuthenticationSDKModule.signWebauthnTransactionWithData(rawAuthenticationData);
 ```
 
 ### Native Biometrics
@@ -201,7 +227,23 @@ private randomString = (): string => {
 }
 ```
 
+#### Unregister Native Biometrics
+```js
+const { publicKeyId } = await TSAuthenticationSDKModule.unregisterNativeBiometrics(username);
+```
+
+#### Native biometrics availability
+```js
+const isEnrolled = await TSAuthenticationSDKModule.isNativeBiometricsEnrolled();
+const status = await TSAuthenticationSDKModule.getNativeBiometricsStatus();
+const type = await TSAuthenticationSDKModule.getNativeBiometricsType();
+```
+• `isNativeBiometricsEnrolled` is `true` when biometrics are set up on the device, even if they cannot be used right now.<br>
+• `getNativeBiometricsStatus` returns `available`, `notEnrolled` or `notAvailable` on both platforms. iOS can also return `permissionDenied` and `lockedOut`. Android can also return `noHardware`, `securityUpdateRequired` and `unsupported`.<br>
+• `getNativeBiometricsType` returns `faceID`, `touchID`, `opticID` or `none` on iOS, and `null` on Android.
+
 ### Approval with WebAuthn
+Use this API to approve a transaction with approval data, such as an amount and a payee.
 ```js
 onApprovalWebAuthn = async (username: string, approvalData: { [key: string]: string }): Promise<void> => {
     try {
@@ -261,6 +303,36 @@ authenticatePinCode = async (username: string, pinCode: string): Promise<void> =
         console.error(`Error authenticating with PIN code: ${error}`);
     }
 }
+```
+
+### Unregister PIN Code
+The PIN code stays registered until you commit the unregistration.
+```js
+onUnregisterPinCode = async (username: string): Promise<void> => {
+    try {
+        const result = await TSAuthenticationSDKModule.unregisterPinCode(username);
+        // remove the PIN authenticator in your backend, then commit
+        await TSAuthenticationSDKModule.commitPinUnregistration(result.contextIdentifier);
+    } catch (error) {
+        console.error(`Error unregistering PIN code: ${error}`);
+    }
+}
+```
+
+### TOTP
+```js
+// uri is the otpauth:// URI from your TOTP registration flow.
+// securityType: 'none' (default), 'biometric', 'devicePin' or 'devicePinOrBiometric'
+const { uuid } = await TSAuthenticationSDKModule.registerTOTP(uri, 'none');
+
+const { code } = await TSAuthenticationSDKModule.generateTOTPCode(uuid);
+const { code: challengeCode } = await TSAuthenticationSDKModule.generateTOTPCodeWithChallenge(uuid, challenge);
+```
+Security types other than `none` prompt for biometrics or the device passcode when a code is generated. On iOS, `biometric` and `devicePinOrBiometric` require `NSFaceIDUsageDescription` in your Info.plist.
+
+### Sign with the device key
+```js
+const { signature } = await TSAuthenticationSDKModule.signWithDeviceKey(challenge);
 ```
 
 ### Information about the device
@@ -325,6 +397,7 @@ try {
 | `pinCodeDuplicateCommit` | PIN registration already committed |
 | `totpError` | TOTP failure |
 | `invalidArgument` | Invalid parameters passed by the app |
+| `activityNotAvailable` | Android only: the operation needs an Activity in the foreground |
 | `unknown` | Unmapped or internal error |
 
 `userCanceled` covers both the SDK cancel signal and Apple's `ASAuthorizationError` code `1001`, so a dismissed passkey sheet always yields `userCanceled`.

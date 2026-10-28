@@ -24,12 +24,24 @@ import com.transmit.authentication.AuthenticationResult;
 import com.transmit.authentication.RegistrationResult;
 import com.transmit.authentication.TSAuthCallback;
 import com.transmit.authentication.TSAuthentication;
+import com.transmit.authentication.TSAuthenticationInitOptions;
+import com.transmit.authentication.TSSignError;
+import com.transmit.authentication.TSSignResult;
+import com.transmit.authentication.TSWebAuthnApiPaths;
 import com.transmit.authentication.TSWebAuthnRegistrationError;
 import com.transmit.authentication.biometrics.BiometricPromptTexts;
 import com.transmit.authentication.biometrics.TSBiometricsAuthError;
 import com.transmit.authentication.biometrics.TSBiometricsAuthResult;
 import com.transmit.authentication.biometrics.TSBiometricsRegistrationError;
 import com.transmit.authentication.biometrics.TSBiometricsRegistrationResult;
+import com.transmit.authentication.biometrics.TSBiometricsUnregistrationError;
+import com.transmit.authentication.biometrics.TSBiometricsUnregistrationResult;
+import com.transmit.authentication.biometrics.TSNativeBiometricsStatus;
+import com.transmit.authentication.crpto.totp.ITSRegisterTOTPCallback;
+import com.transmit.authentication.crpto.totp.ITSTOTPGenerateTOTPCallback;
+import com.transmit.authentication.crpto.totp.TSTOTPError;
+import com.transmit.authentication.crpto.totp.TSTOTPRegistrationResult;
+import com.transmit.authentication.crpto.totp.TSTOTPSecurityType;
 import com.transmit.authentication.biometrics.TSNativeBiometricsApprovalError;
 import com.transmit.authentication.biometrics.TSNativeBiometricsApprovalResult;
 import com.transmit.authentication.exceptions.TSAuthenticationInitializeException;
@@ -42,6 +54,10 @@ import com.transmit.authentication.pincode.TSPinCodeAuthenticationResult;
 import com.transmit.authentication.pincode.TSPinCodeRegistrationContext;
 import com.transmit.authentication.pincode.TSPinCodeRegistrationError;
 import com.transmit.authentication.pincode.TSPinCodeRegistrationResult;
+import com.transmit.authentication.pincode.TSPinCodeUnregistrationContext;
+import com.transmit.authentication.pincode.TSPinCodeUnregistrationError;
+import com.transmit.authentication.pincode.TSPinCodeUnregistrationResult;
+import com.transmit.authentication.webauthn.TSWebAuthnRegistrationData;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -73,7 +89,8 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
-  public void initializeSDK(Promise promise) {
+  public void initializeSDK(@Nullable String configurationFileName, Promise promise) {
+    // configurationFileName is iOS-only (a custom plist name); Android always reads strings.xml.
     try {
       TSAuthentication.initializeSDK(reactContext);
       promise.resolve(true);
@@ -85,7 +102,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
-  public void initialize(String clientId, String domain, String baseUrl, Promise promise) {
+  public void initialize(String clientId, String domain, String baseUrl, @Nullable ReadableMap initOptions, Promise promise) {
     if (clientId == null || clientId.isEmpty() || baseUrl == null || baseUrl.isEmpty()) {
       promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid params provided to .initialize");
       return;
@@ -96,7 +113,7 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         clientId,
         baseUrl,
         domain.length() > 0 ? domain : null,
-        null
+        convertInitOptions(initOptions)
     );
     promise.resolve(true);
   }
@@ -141,7 +158,8 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
-  public void authenticateWebAuthn(String username, Promise promise) {
+  public void authenticateWebAuthn(String username, @Nullable ReadableArray options, Promise promise) {
+    // options (e.g. preferLocalCredantials) are iOS-only; the Android SDK takes none.
     Activity activity = requireActivity(promise);
     if (activity == null) return;
 
@@ -168,13 +186,106 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   // Exported under the JS name; the native Android API is signTransactionWebAuthn.
   @ReactMethod
   @NonNull
-  public void signWebauthnTransaction(String username, Promise promise) {
+  public void signWebauthnTransaction(String username, @Nullable ReadableArray options, Promise promise) {
     Activity activity = requireActivity(promise);
     if (activity == null) return;
 
     TSAuthentication.signTransactionWebAuthn(
         activity,
         username,
+        new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
+          @Override
+          public void success(AuthenticationResult authenticationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", authenticationResult.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
+            TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
+          }
+        });
+  }
+
+  // WebAuthn with raw data
+
+  // The registration data is the server JSON (webauthn_session_id, credential_creation_options), as a string.
+  @ReactMethod
+  @NonNull
+  public void registerWebAuthnWithData(String rawRegistrationData, Promise promise) {
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
+
+    TSWebAuthnRegistrationData registrationData = TSWebAuthnRegistrationData.createFromJsonString(rawRegistrationData);
+    if (registrationData == null) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid rawRegistrationData");
+      return;
+    }
+
+    TSAuthentication.registerWebAuthn(
+        activity,
+        registrationData,
+        new TSAuthCallback<RegistrationResult, TSWebAuthnRegistrationError>() {
+          @Override
+          public void success(RegistrationResult registrationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", registrationResult.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnRegistrationError tsWebAuthnRegistrationError) {
+            TsErrorMapper.reject(promise, tsWebAuthnRegistrationError);
+          }
+        });
+  }
+
+  @ReactMethod
+  @NonNull
+  public void authenticateWebAuthnWithData(ReadableMap rawAuthenticationData, @Nullable ReadableArray options, Promise promise) {
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
+
+    TSWebAuthnAuthenticationData authData = convertWebAuthnAuthenticationData(rawAuthenticationData.toHashMap());
+    if (authData == null) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid rawAuthenticationData");
+      return;
+    }
+
+    TSAuthentication.authenticateWebAuthn(
+        activity,
+        authData,
+        new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
+          @Override
+          public void success(AuthenticationResult authenticationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", authenticationResult.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
+            TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
+          }
+        });
+  }
+
+  @ReactMethod
+  @NonNull
+  public void signWebauthnTransactionWithData(ReadableMap rawAuthenticationData, @Nullable ReadableArray options, Promise promise) {
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
+
+    TSWebAuthnAuthenticationData authData = convertWebAuthnAuthenticationData(rawAuthenticationData.toHashMap());
+    if (authData == null) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid rawAuthenticationData");
+      return;
+    }
+
+    TSAuthentication.signTransactionWebAuthn(
+        activity,
+        authData,
         new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
           @Override
           public void success(AuthenticationResult authenticationResult) {
@@ -250,6 +361,62 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
             TsErrorMapper.reject(promise, tsBiometricsAuthError);
           }
         });
+  }
+
+  @ReactMethod
+  @NonNull
+  public void unregisterNativeBiometrics(String username, Promise promise) {
+    try {
+      TSAuthentication.unregisterNativeBiometrics(
+          reactContext,
+          username,
+          new TSAuthCallback<TSBiometricsUnregistrationResult, TSBiometricsUnregistrationError>() {
+            @Override
+            public void success(TSBiometricsUnregistrationResult result) {
+              WritableMap map = new WritableNativeMap();
+              map.putString("publicKeyId", result.keyId());
+              promise.resolve(map);
+            }
+
+            @Override
+            public void error(TSBiometricsUnregistrationError error) {
+              TsErrorMapper.reject(promise, error);
+            }
+          });
+    } catch (Exception e) {
+      // The SDK throws instead of calling back when it is not initialized.
+      promise.reject(TsErrorMapper.NOT_INITIALIZED, e.getMessage(), e);
+    }
+  }
+
+  // "Enrolled" mirrors iOS isNativeBiometricsEnrolled: biometrics are set up on the device,
+  // even if they cannot be used right now (e.g. hardware temporarily unavailable).
+  @ReactMethod
+  @NonNull
+  public void isNativeBiometricsEnrolled(Promise promise) {
+    try {
+      TSNativeBiometricsStatus status = TSAuthentication.getNativeBiometricsStatus(reactContext);
+      promise.resolve(status != TSNativeBiometricsStatus.NonEnrolled);
+    } catch (Exception e) {
+      promise.reject(TsErrorMapper.NOT_INITIALIZED, e.getMessage(), e);
+    }
+  }
+
+  @ReactMethod
+  @NonNull
+  public void getNativeBiometricsStatus(Promise promise) {
+    try {
+      promise.resolve(convertBiometricsStatus(TSAuthentication.getNativeBiometricsStatus(reactContext)));
+    } catch (Exception e) {
+      promise.reject(TsErrorMapper.NOT_INITIALIZED, e.getMessage(), e);
+    }
+  }
+
+  // The Android SDK does not report the biometric modality.
+  @ReactMethod
+  @NonNull
+  public void getNativeBiometricsType(Promise promise) {
+    promise.resolve(null);
   }
 
   // region Approvals
@@ -409,6 +576,44 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
+  public void unregisterPinCode(String username, Promise promise) {
+    TSAuthentication.unregisterPinCode(
+      username,
+      new TSAuthCallback<TSPinCodeUnregistrationResult, TSPinCodeUnregistrationError>() {
+          @Override
+          public void success(TSPinCodeUnregistrationResult result) {
+            String contextIdentifier = generateContextIdentifier();
+            storeContextWithIdentifier(contextIdentifier, result.unregistrationContext());
+
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", result.keyId());
+            map.putString("contextIdentifier", contextIdentifier);
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSPinCodeUnregistrationError error) {
+            TsErrorMapper.reject(promise, error);
+          }
+        });
+  }
+
+  @ReactMethod
+  @NonNull
+  public void commitPinUnregistration(String contextIdentifier, Promise promise) {
+    Object context = getContextWithIdentifier(contextIdentifier);
+
+    if (!(context instanceof TSPinCodeUnregistrationContext)) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "PIN Unregistration Context not found for the context identifier provided");
+    } else {
+      removeContextWithIdentifier(contextIdentifier);
+      ((TSPinCodeUnregistrationContext) context).commit();
+      promise.resolve(true);
+    }
+  }
+
+  @ReactMethod
+  @NonNull
   public void authenticatePinCode(String username, String pinCode, String challenge, Promise promise) {
     TSAuthentication.authenticatePinCode(username, pinCode, challenge, new TSAuthCallback<TSPinCodeAuthenticationResult, TSPinCodeAuthenticationError>() {
       @Override
@@ -426,6 +631,110 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
         TsErrorMapper.reject(promise, error);
       }
     });
+  }
+
+  // region Device key, logging
+
+  @ReactMethod
+  @NonNull
+  public void signWithDeviceKey(String challenge, Promise promise) {
+    TSAuthentication.signWithDeviceKey(
+        reactContext,
+        challenge,
+        new TSAuthCallback<TSSignResult, TSSignError>() {
+          @Override
+          public void success(TSSignResult result) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("signature", result.getSignedData());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSSignError error) {
+            TsErrorMapper.reject(promise, error);
+          }
+        });
+  }
+
+  @ReactMethod
+  @NonNull
+  public void setLoggingEnabled(boolean enabled, Promise promise) {
+    TSAuthentication.setLoggingEnabled(enabled);
+    promise.resolve(null);
+  }
+
+  // region TOTP
+
+  // TOTP security types other than "none" show a biometric or device credential prompt, which
+  // needs the foreground activity; "none" works without one.
+  @ReactMethod
+  @NonNull
+  public void registerTOTP(String uri, String securityType, Promise promise) {
+    TSTOTPSecurityType totpSecurityType = convertTOTPSecurityType(securityType);
+    if (totpSecurityType == null) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid TOTP security type: " + securityType);
+      return;
+    }
+
+    TSAuthentication.registerTOTP(totpContext(), uri, totpSecurityType, new ITSRegisterTOTPCallback() {
+      @Override
+      public void onSuccess(@NonNull TSTOTPRegistrationResult registrationResult) {
+        WritableMap map = new WritableNativeMap();
+        map.putString("uuid", registrationResult.getUuid());
+        map.putString("issuer", registrationResult.getIssuer());
+        map.putString("label", registrationResult.getLabel());
+        promise.resolve(map);
+      }
+
+      @Override
+      public void onFailed(@NonNull TSTOTPError error) {
+        TsErrorMapper.reject(promise, error);
+      }
+    });
+  }
+
+  @ReactMethod
+  @NonNull
+  public void generateTOTPCode(String uuid, Promise promise) {
+    TSAuthentication.generateTOTP(totpContext(), uuid, totpCodeCallback(promise));
+  }
+
+  @ReactMethod
+  @NonNull
+  public void generateTOTPCodeWithChallenge(String uuid, String challenge, Promise promise) {
+    TSAuthentication.generateTOTPWithChallenge(totpContext(), uuid, challenge, totpCodeCallback(promise));
+  }
+
+  private ITSTOTPGenerateTOTPCallback totpCodeCallback(Promise promise) {
+    return new ITSTOTPGenerateTOTPCallback() {
+      @Override
+      public void onSuccess(@NonNull String totpCode) {
+        WritableMap map = new WritableNativeMap();
+        map.putString("code", totpCode);
+        promise.resolve(map);
+      }
+
+      @Override
+      public void onFailed(@NonNull TSTOTPError error) {
+        TsErrorMapper.reject(promise, error);
+      }
+    };
+  }
+
+  private Context totpContext() {
+    Activity activity = reactContext.getCurrentActivity();
+    return activity != null ? activity : reactContext;
+  }
+
+  @Nullable
+  private TSTOTPSecurityType convertTOTPSecurityType(String rawType) {
+    switch (rawType) {
+      case "none": return TSTOTPSecurityType.None;
+      case "biometric": return TSTOTPSecurityType.Biometric;
+      case "devicePin": return TSTOTPSecurityType.DevicePin;
+      case "devicePinOrBiometric": return TSTOTPSecurityType.DevicePinOrBiometric;
+      default: return null;
+    }
   }
 
   // region Context Store
@@ -514,6 +823,32 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
     );
 
     return authData;
+  }
+
+  @Nullable
+  private TSAuthenticationInitOptions convertInitOptions(@Nullable ReadableMap rawOptions) {
+    if (rawOptions == null || !rawOptions.hasKey("webAuthnApiPaths") || rawOptions.isNull("webAuthnApiPaths")) {
+      return null;
+    }
+    ReadableMap paths = rawOptions.getMap("webAuthnApiPaths");
+    if (paths == null || !paths.hasKey("startRegistration") || !paths.hasKey("startAuthentication")) {
+      return null;
+    }
+    return new TSAuthenticationInitOptions(
+        new TSWebAuthnApiPaths(paths.getString("startRegistration"), paths.getString("startAuthentication")));
+  }
+
+  // Shared with iOS (TSBiometricStatus) where the values overlap; the rest are Android-only.
+  private String convertBiometricsStatus(TSNativeBiometricsStatus status) {
+    switch (status) {
+      case CanAuthenticate: return "available";
+      case NonEnrolled: return "notEnrolled";
+      case HardwareNotAvailable: return "notAvailable";
+      case NoHarddware: return "noHardware";
+      case SecurityUpdateRequired: return "securityUpdateRequired";
+      case Unsupported: return "unsupported";
+      default: return "unknown";
+    }
   }
 
   @SuppressWarnings("unchecked")

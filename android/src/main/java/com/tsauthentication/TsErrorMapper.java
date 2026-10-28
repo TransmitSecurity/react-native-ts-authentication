@@ -3,6 +3,8 @@ package com.tsauthentication;
 import com.facebook.react.bridge.Promise;
 import com.transmit.authentication.pincode.TSPinCodeAuthenticationError;
 import com.transmit.authentication.pincode.TSPinCodeRegistrationError;
+import com.transmit.authentication.pincode.TSPinCodeUnregistrationError;
+import com.transmit.authentication.crpto.totp.TSTOTPError;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +14,7 @@ class TsErrorMapper {
   static final String INVALID_ARGUMENT = "invalidArgument";
   static final String UNSUPPORTED_OS_VERSION = "unsupportedOSVersion";
   static final String INITIALIZATION_ERROR = "initializationError";
+  static final String NOT_INITIALIZED = "notInitialized";
   static final String ACTIVITY_NOT_AVAILABLE = "activityNotAvailable";
 
   private static final String UNKNOWN = "unknown";
@@ -69,8 +72,14 @@ class TsErrorMapper {
   }
 
   private static String code(Object error, String name) {
-    if (error instanceof TSPinCodeAuthenticationError || error instanceof TSPinCodeRegistrationError) {
+    if (error instanceof TSPinCodeAuthenticationError
+        || error instanceof TSPinCodeRegistrationError
+        || error instanceof TSPinCodeUnregistrationError) {
       return "NotRegistered".equals(name) ? "pinCodeNotRegistered" : UNKNOWN;
+    }
+    // iOS reports every TOTP failure as totpError, so Android does the same.
+    if (error instanceof TSTOTPError) {
+      return "SDKNotInitialized".equals(name) ? "notInitialized" : "totpError";
     }
     String code = CODES.get(name);
     return code != null ? code : UNKNOWN;

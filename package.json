@@ -1,6 +1,6 @@
 {
   "name": "react-native-ts-authentication",
-  "version": "0.2.0-SNAPSHOT",
+  "version": "0.2.0",
   "description": "React Native module for Transmit Security Authentication SDK",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",

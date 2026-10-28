@@ -17,6 +17,13 @@ apply plugin: "com.android.library"
 
 if (isNewArchitectureEnabled()) {
   apply plugin: "com.facebook.react"
+
+  // This is a legacy native module with no codegen specs. Without a jsRootDir, codegen scans the
+  // whole package directory, including a local node_modules/react-native, and compiles React
+  // Native's own spec classes into this library (duplicate classes in the app's release build).
+  react {
+    jsRootDir = file("../src/")
+  }
 }
 
 def getExtOrDefault(name) {

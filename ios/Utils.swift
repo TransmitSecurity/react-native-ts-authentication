@@ -10,6 +10,6 @@ import Foundation
 let logger = Logger()
 class Logger {
     func log(_ message: String) {
-        NSLog("@%", "TSAuthentication: \(message)")
+        NSLog("%@", "TSAuthentication: \(message)")
     }
 }

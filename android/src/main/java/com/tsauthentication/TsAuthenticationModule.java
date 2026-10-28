@@ -73,28 +73,32 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   @NonNull
-  public void initializeSDK() {
-    TSAuthentication.initializeSDK(reactContext);
+  public void initializeSDK(Promise promise) {
+    try {
+      TSAuthentication.initializeSDK(reactContext);
+      promise.resolve(true);
+    } catch (Exception e) {
+      // TSAuthenticationInitializeException (missing strings.xml values); not declared in the bytecode.
+      promise.reject(TsErrorMapper.INITIALIZATION_ERROR, e.getMessage(), e);
+    }
   }
 
   @ReactMethod
   @NonNull
   public void initialize(String clientId, String domain, String baseUrl, Promise promise) {
-
-    if (reactContext.getCurrentActivity() != null) {
-      if (domain.length() > 0) {
-        TSAuthentication.initialize(
-            reactContext,
-            clientId
-        );
-      } else {
-        TSAuthentication.initialize(
-            reactContext,
-            clientId
-        );
-      }
-      promise.resolve(true);
+    if (clientId == null || clientId.isEmpty() || baseUrl == null || baseUrl.isEmpty()) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid params provided to .initialize");
+      return;
     }
+
+    TSAuthentication.initialize(
+        reactContext,
+        clientId,
+        baseUrl,
+        domain.length() > 0 ? domain : null,
+        null
+    );
+    promise.resolve(true);
   }
 
   // Registration
@@ -105,38 +109,32 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       String username,
       String displayName,
       Promise promise) {
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
 
-    if (reactContext.getCurrentActivity() != null) {
-      Boolean isSupported = TSAuthentication.isWebAuthnSupported();
-      if (!isSupported) {
-        promise.reject(TsErrorMapper.UNSUPPORTED_OS_VERSION, "Unsupported platform");
-        return;
-      }
-
-      continueRegistration(username, displayName, promise);
+    Boolean isSupported = TSAuthentication.isWebAuthnSupported();
+    if (!isSupported) {
+      promise.reject(TsErrorMapper.UNSUPPORTED_OS_VERSION, "Unsupported platform");
+      return;
     }
-  }
 
-  private void continueRegistration(String username, String displayName, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      TSAuthentication.registerWebAuthn(
-          reactContext.getCurrentActivity(),
-          username,
-          displayName,
-          new TSAuthCallback<RegistrationResult, TSWebAuthnRegistrationError>() {
-            @Override
-            public void success(RegistrationResult registrationResult) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("result", registrationResult.result());
-              promise.resolve(map);
-            }
+    TSAuthentication.registerWebAuthn(
+        activity,
+        username,
+        displayName,
+        new TSAuthCallback<RegistrationResult, TSWebAuthnRegistrationError>() {
+          @Override
+          public void success(RegistrationResult registrationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", registrationResult.result());
+            promise.resolve(map);
+          }
 
-            @Override
-            public void error(TSWebAuthnRegistrationError tsWebAuthnRegistrationError) {
-              TsErrorMapper.reject(promise, tsWebAuthnRegistrationError);
-            }
-          });
-    }
+          @Override
+          public void error(TSWebAuthnRegistrationError tsWebAuthnRegistrationError) {
+            TsErrorMapper.reject(promise, tsWebAuthnRegistrationError);
+          }
+        });
   }
 
   // Authentication
@@ -144,48 +142,52 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void authenticateWebAuthn(String username, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      TSAuthentication.authenticateWebAuthn(
-          reactContext.getCurrentActivity(),
-          username,
-          new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
-            @Override
-            public void success(AuthenticationResult authenticationResult) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("result", authenticationResult.result());
-              promise.resolve(map);
-            }
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
 
-            @Override
-            public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
-              TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
-            }
-          });
-    }
+    TSAuthentication.authenticateWebAuthn(
+        activity,
+        username,
+        new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
+          @Override
+          public void success(AuthenticationResult authenticationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", authenticationResult.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
+            TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
+          }
+        });
   }
 
   // Transaction
+
+  // Exported under the JS name; the native Android API is signTransactionWebAuthn.
   @ReactMethod
   @NonNull
-  public void signTransactionWebAuthn(String username, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      TSAuthentication.signTransactionWebAuthn(
-          reactContext.getCurrentActivity(),
-          username,
-          new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
-            @Override
-            public void success(AuthenticationResult authenticationResult) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("result", authenticationResult.result());
-              promise.resolve(map);
-            }
+  public void signWebauthnTransaction(String username, Promise promise) {
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
 
-            @Override
-            public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
-              TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
-            }
-          });
-    }
+    TSAuthentication.signTransactionWebAuthn(
+        activity,
+        username,
+        new TSAuthCallback<AuthenticationResult, TSWebAuthnAuthenticationError>() {
+          @Override
+          public void success(AuthenticationResult authenticationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", authenticationResult.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnAuthenticationError tsWebAuthnAuthenticationError) {
+            TsErrorMapper.reject(promise, tsWebAuthnAuthenticationError);
+          }
+        });
   }
 
   // Native Biometrics
@@ -193,66 +195,61 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void registerNativeBiometrics(String username, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      TSAuthentication.registerNativeBiometrics(
-          reactContext.getCurrentActivity(),
-          username,
-          new TSAuthCallback<TSBiometricsRegistrationResult, TSBiometricsRegistrationError>() {
-            @Override
-            public void success(TSBiometricsRegistrationResult tsBiometricsRegistrationResult) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("publicKeyId", tsBiometricsRegistrationResult.keyId());
-              map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
-              map.putString("os", "Android");
-              map.putString("keyType", tsBiometricsRegistrationResult.keyType());
-              promise.resolve(map);
-            }
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
 
-            @Override
-            public void error(TSBiometricsRegistrationError tsBiometricsRegistrationError) {
-              TsErrorMapper.reject(promise, tsBiometricsRegistrationError);
-            }
-          });
-    }
+    TSAuthentication.registerNativeBiometrics(
+        activity,
+        username,
+        new TSAuthCallback<TSBiometricsRegistrationResult, TSBiometricsRegistrationError>() {
+          @Override
+          public void success(TSBiometricsRegistrationResult tsBiometricsRegistrationResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", tsBiometricsRegistrationResult.keyId());
+            map.putString("publicKey", tsBiometricsRegistrationResult.publicKey());
+            map.putString("os", "Android");
+            map.putString("keyType", tsBiometricsRegistrationResult.keyType());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSBiometricsRegistrationError tsBiometricsRegistrationError) {
+            TsErrorMapper.reject(promise, tsBiometricsRegistrationError);
+          }
+        });
   }
 
   @ReactMethod
   @NonNull
   public void authenticateNativeBiometrics(String username, String challenge, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
+    AppCompatActivity appCompatActivity = requireAppCompatActivity(promise);
+    if (appCompatActivity == null) return;
 
-      AppCompatActivity appCompatActivity = getAppCompatActivity();
-      if (appCompatActivity == null) {
-        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
-        return;
-      }
+    Map<String, String> biometricsString = getBiometricsStrings();
+    BiometricPromptTexts promptTexts = new BiometricPromptTexts(
+        biometricsString.get("titleTxt"),
+        biometricsString.get("subtitleTxt"),
+        biometricsString.get("cancelTxt"));
 
-      Map<String, String> biometricsString = getBiometricsStrings();
-      BiometricPromptTexts promptTexts = new BiometricPromptTexts(
-          biometricsString.get("titleTxt"),
-          biometricsString.get("subtitleTxt"),
-          biometricsString.get("cancelTxt"));
+    TSAuthentication.authenticateNativeBiometrics(
+        appCompatActivity,
+        username,
+        challenge,
+        promptTexts,
+        new TSAuthCallback<TSBiometricsAuthResult, TSBiometricsAuthError>() {
+          @Override
+          public void success(TSBiometricsAuthResult tsBiometricsAuthResult) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", tsBiometricsAuthResult.keyId());
+            map.putString("signature", tsBiometricsAuthResult.signature());
+            promise.resolve(map);
+          }
 
-      TSAuthentication.authenticateNativeBiometrics(
-          appCompatActivity,
-          username,
-          challenge,
-          promptTexts,
-          new TSAuthCallback<TSBiometricsAuthResult, TSBiometricsAuthError>() {
-            @Override
-            public void success(TSBiometricsAuthResult tsBiometricsAuthResult) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("publicKeyId", tsBiometricsAuthResult.keyId());
-              map.putString("signature", tsBiometricsAuthResult.signature());
-              promise.resolve(map);
-            }
-
-            @Override
-            public void error(TSBiometricsAuthError tsBiometricsAuthError) {
-              TsErrorMapper.reject(promise, tsBiometricsAuthError);
-            }
-          });
-    }
+          @Override
+          public void error(TSBiometricsAuthError tsBiometricsAuthError) {
+            TsErrorMapper.reject(promise, tsBiometricsAuthError);
+          }
+        });
   }
 
   // region Approvals
@@ -260,30 +257,31 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void approvalWebAuthn(String username, ReadableMap approvalData, ReadableArray options, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      Map<String, String> approvalDataMap = new HashMap<>();
-      for (Map.Entry<String, Object> entry : approvalData.toHashMap().entrySet()) {
-        approvalDataMap.put(entry.getKey(), entry.getValue().toString());
-      }
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
 
-      TSAuthentication.approvalWebAuthn(
-          reactContext.getCurrentActivity(),
-          username,
-          approvalDataMap,
-          new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
-            @Override
-            public void success(TSWebAuthnApprovalResult result) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("result", result.result());
-              promise.resolve(map);
-            }
-
-            @Override
-            public void error(TSWebAuthnApprovalError error) {
-              TsErrorMapper.reject(promise, error);
-            }
-          });
+    Map<String, String> approvalDataMap = new HashMap<>();
+    for (Map.Entry<String, Object> entry : approvalData.toHashMap().entrySet()) {
+      approvalDataMap.put(entry.getKey(), entry.getValue().toString());
     }
+
+    TSAuthentication.approvalWebAuthn(
+        activity,
+        username,
+        approvalDataMap,
+        new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
+          @Override
+          public void success(TSWebAuthnApprovalResult result) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", result.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnApprovalError error) {
+            TsErrorMapper.reject(promise, error);
+          }
+        });
   }
 
   @ReactMethod
@@ -292,38 +290,39 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       ReadableMap rawAuthenticationData,
       ReadableArray options,
       Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      Map<String, Object> authDataMap = rawAuthenticationData.toHashMap();
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
 
-      if (authDataMap == null || authDataMap.isEmpty()) {
-        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid authentication data");
-        return;
-      }
+    Map<String, Object> authDataMap = rawAuthenticationData.toHashMap();
 
-      TSWebAuthnAuthenticationData authData = this.convertWebAuthnAuthenticationData(authDataMap);
-
-      if (authData == null) {
-        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Error converting authentication data.");
-        return;
-      }
-
-      TSAuthentication.approvalWebAuthn(
-          reactContext.getCurrentActivity(),
-          authData,
-          new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
-            @Override
-            public void success(TSWebAuthnApprovalResult result) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("result", result.result());
-              promise.resolve(map);
-            }
-
-            @Override
-            public void error(TSWebAuthnApprovalError error) {
-              TsErrorMapper.reject(promise, error);
-            }
-          });
+    if (authDataMap == null || authDataMap.isEmpty()) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Invalid authentication data");
+      return;
     }
+
+    TSWebAuthnAuthenticationData authData = this.convertWebAuthnAuthenticationData(authDataMap);
+
+    if (authData == null) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "Error converting authentication data.");
+      return;
+    }
+
+    TSAuthentication.approvalWebAuthn(
+        activity,
+        authData,
+        new TSAuthCallback<TSWebAuthnApprovalResult, TSWebAuthnApprovalError>() {
+          @Override
+          public void success(TSWebAuthnApprovalResult result) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("result", result.result());
+            promise.resolve(map);
+          }
+
+          @Override
+          public void error(TSWebAuthnApprovalError error) {
+            TsErrorMapper.reject(promise, error);
+          }
+        });
   }
 
   @ReactMethod
@@ -332,39 +331,34 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
       String username,
       String challenge,
       Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      AppCompatActivity appCompatActivity = getAppCompatActivity();
-      if (appCompatActivity == null) {
-        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
-        return;
-      }
+    AppCompatActivity appCompatActivity = requireAppCompatActivity(promise);
+    if (appCompatActivity == null) return;
 
-      Map<String, String> biometricsString = getBiometricsStrings();
-      BiometricPromptTexts promptTexts = new BiometricPromptTexts(
-          biometricsString.get("titleTxt"),
-          biometricsString.get("subtitleTxt"),
-          biometricsString.get("cancelTxt"));
+    Map<String, String> biometricsString = getBiometricsStrings();
+    BiometricPromptTexts promptTexts = new BiometricPromptTexts(
+        biometricsString.get("titleTxt"),
+        biometricsString.get("subtitleTxt"),
+        biometricsString.get("cancelTxt"));
 
-      TSAuthentication.approvalNativeBiometrics(
-          appCompatActivity,
-          username,
-          challenge,
-          promptTexts,
-          new TSAuthCallback<TSNativeBiometricsApprovalResult, TSNativeBiometricsApprovalError>() {
-            @Override
-            public void success(TSNativeBiometricsApprovalResult result) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("publicKeyId", result.keyId());
-              map.putString("signature", result.signature());
-              promise.resolve(map);
-            }
+    TSAuthentication.approvalNativeBiometrics(
+        appCompatActivity,
+        username,
+        challenge,
+        promptTexts,
+        new TSAuthCallback<TSNativeBiometricsApprovalResult, TSNativeBiometricsApprovalError>() {
+          @Override
+          public void success(TSNativeBiometricsApprovalResult result) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", result.keyId());
+            map.putString("signature", result.signature());
+            promise.resolve(map);
+          }
 
-            @Override
-            public void error(TSNativeBiometricsApprovalError error) {
-              TsErrorMapper.reject(promise, error);
-            }
-          });
-    }
+          @Override
+          public void error(TSNativeBiometricsApprovalError error) {
+            TsErrorMapper.reject(promise, error);
+          }
+        });
   }
 
   // region PIN Authenticator
@@ -372,39 +366,30 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void registerPinCode(String username, String pinCode, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
+    TSAuthentication.registerPinCode(
+      username,
+      pinCode,
+      new TSAuthCallback<TSPinCodeRegistrationResult, TSPinCodeRegistrationError>() {
+          @Override
+          public void success(TSPinCodeRegistrationResult result) {
+            TSPinCodeRegistrationContext context = result.registrationContext();
+            String contextIdentifier = generateContextIdentifier();
+            storeContextWithIdentifier(contextIdentifier, context);
 
-      AppCompatActivity appCompatActivity = getAppCompatActivity();
-      if (appCompatActivity == null) {
-        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
-        return;
-      }
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", result.keyId());
+            map.putString("publicKey", result.publicKey());
+            map.putString("keyType", result.keyType());
+            map.putString("contextIdentifier", contextIdentifier);
 
-      TSAuthentication.registerPinCode(
-        username,
-        pinCode,
-        new TSAuthCallback<TSPinCodeRegistrationResult, TSPinCodeRegistrationError>() {
-            @Override
-            public void success(TSPinCodeRegistrationResult result) {
-              TSPinCodeRegistrationContext context = result.registrationContext();
-              String contextIdentifier = generateContextIdentifier();
-              storeContextWithIdentifier(contextIdentifier, context);
+            promise.resolve(map);
+          }
 
-              WritableMap map = new WritableNativeMap();
-              map.putString("publicKeyId", result.keyId());
-              map.putString("publicKey", result.publicKey());
-              map.putString("keyType", result.keyType());
-              map.putString("contextIdentifier", contextIdentifier);
-
-              promise.resolve(map);
-            }
-
-            @Override
-            public void error(TSPinCodeRegistrationError error) {
-              TsErrorMapper.reject(promise, error);
-            }
-          });
-    }
+          @Override
+          public void error(TSPinCodeRegistrationError error) {
+            TsErrorMapper.reject(promise, error);
+          }
+        });
   }
 
   @ReactMethod
@@ -425,31 +410,22 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void authenticatePinCode(String username, String pinCode, String challenge, Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
+    TSAuthentication.authenticatePinCode(username, pinCode, challenge, new TSAuthCallback<TSPinCodeAuthenticationResult, TSPinCodeAuthenticationError>() {
+      @Override
+      public void success(TSPinCodeAuthenticationResult result) {
+        WritableMap map = new WritableNativeMap();
+        map.putString("publicKeyId", result.keyId());
+        map.putString("signature", result.signature());
+        map.putString("challenge", result.challenge());
 
-      AppCompatActivity appCompatActivity = getAppCompatActivity();
-      if (appCompatActivity == null) {
-        promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
-        return;
+        promise.resolve(map);
       }
 
-      TSAuthentication.authenticatePinCode(username, pinCode, challenge, new TSAuthCallback<TSPinCodeAuthenticationResult, TSPinCodeAuthenticationError>() {
-        @Override
-        public void success(TSPinCodeAuthenticationResult result) {
-          WritableMap map = new WritableNativeMap();
-          map.putString("publicKeyId", result.keyId());
-          map.putString("signature", result.signature());
-          map.putString("challenge", result.challenge());
-
-          promise.resolve(map);
-        }
-
-        @Override
-        public void error(TSPinCodeAuthenticationError error) {
-          TsErrorMapper.reject(promise, error);
-        }
-      });
-    }
+      @Override
+      public void error(TSPinCodeAuthenticationError error) {
+        TsErrorMapper.reject(promise, error);
+      }
+    });
   }
 
   // region Context Store
@@ -567,13 +543,28 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   }
 
   @Nullable
-  private AppCompatActivity getAppCompatActivity() {
+  private Activity requireActivity(Promise promise) {
     Activity activity = reactContext.getCurrentActivity();
-    if (activity instanceof AppCompatActivity) {
-      return (AppCompatActivity) activity;
-    } else {
+    if (activity == null) {
+      rejectNoActivity(promise);
+    }
+    return activity;
+  }
+
+  private void rejectNoActivity(Promise promise) {
+    promise.reject(TsErrorMapper.ACTIVITY_NOT_AVAILABLE, "This operation requires an Activity in the foreground");
+  }
+
+  @Nullable
+  private AppCompatActivity requireAppCompatActivity(Promise promise) {
+    Activity activity = requireActivity(promise);
+    if (activity == null) return null;
+
+    if (!(activity instanceof AppCompatActivity)) {
+      promise.reject(TsErrorMapper.INVALID_ARGUMENT, "current activity is not an instance of AppCompatActivity");
       return null;
     }
+    return (AppCompatActivity) activity;
   }
 
   private Map<String, String> getBiometricsStrings() {
@@ -600,24 +591,24 @@ public class TsAuthenticationModule extends ReactContextBaseJavaModule {
   @ReactMethod
   @NonNull
   public void getDeviceInfo(Promise promise) {
-    if (reactContext.getCurrentActivity() != null) {
-      TSAuthentication.getDeviceInfo(
-          reactContext.getCurrentActivity(),
-          new TSAuthCallback<DeviceInfo, TSDeviceInfoError>() {
-            @Override
-            public void success(DeviceInfo deviceInfo) {
-              WritableMap map = new WritableNativeMap();
-              map.putString("publicKeyId", deviceInfo.getPublicKeyId());
-              map.putString("publicKey", deviceInfo.getPublicKey());
-              promise.resolve(map);
-            }
+    Activity activity = requireActivity(promise);
+    if (activity == null) return;
+    TSAuthentication.getDeviceInfo(
+        activity,
+        new TSAuthCallback<DeviceInfo, TSDeviceInfoError>() {
+          @Override
+          public void success(DeviceInfo deviceInfo) {
+            WritableMap map = new WritableNativeMap();
+            map.putString("publicKeyId", deviceInfo.getPublicKeyId());
+            map.putString("publicKey", deviceInfo.getPublicKey());
+            promise.resolve(map);
+          }
 
-            @Override
-            public void error(TSDeviceInfoError tsDeviceInfoError) {
-              TsErrorMapper.reject(promise, tsDeviceInfoError);
-            }
-          });
-    }
+          @Override
+          public void error(TSDeviceInfoError tsDeviceInfoError) {
+            TsErrorMapper.reject(promise, tsDeviceInfoError);
+          }
+        });
   }
 
   @ReactMethod

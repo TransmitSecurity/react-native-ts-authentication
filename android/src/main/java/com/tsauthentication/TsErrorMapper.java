@@ -11,6 +11,8 @@ class TsErrorMapper {
 
   static final String INVALID_ARGUMENT = "invalidArgument";
   static final String UNSUPPORTED_OS_VERSION = "unsupportedOSVersion";
+  static final String INITIALIZATION_ERROR = "initializationError";
+  static final String ACTIVITY_NOT_AVAILABLE = "activityNotAvailable";
 
   private static final String UNKNOWN = "unknown";
   private static final Map<String, String> CODES = new HashMap<>();

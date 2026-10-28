@@ -79,6 +79,7 @@ export namespace TSAuthenticationSDK {
     | 'pinCodeDuplicateCommit'
     | 'totpError'
     | 'invalidArgument'
+    | 'activityNotAvailable'
     | 'unknown';
 
   export interface TSAuthenticationError {
